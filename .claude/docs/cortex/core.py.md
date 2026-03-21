@@ -1,22 +1,33 @@
 # cortex/core.py
 
 ## Overview
-Language: python | Constructs: 5
-Key imports: os, pathlib, rich.console, rich.progress, miners
+Language: python | Constructs: 9
+Key imports: os, hashlib, json, concurrent.futures, pathlib
+
+## Historical Insights
+- [Bug Fix] 2026-03-21: fix: cortex diff — handle branch...HEAD and branch..HEAD syntax correctly
+  Change: cortex/core.py | 16 ++++++++++++++--
 
 ## Key Constructs
-- **get_changed_files** (function, line 6) — Return set of relative file paths changed since `since` (e.g. HEAD~10, 2024-01-01).
-- **discover_files** (function, line 45) — Find all analyzable source files in repo.
-- **Cortex** (class, line 95)
-- **analyze** (function, line 96)
-- **_write_helper** (function, line 196)
+- **load_cache** (function, line 39)
+- **save_cache** (function, line 49)
+- **file_hash** (function, line 56)
+- **get_changed_files** (function, line 63) — Return set of relative file paths changed since `since`.
+
+Supports:
+- HEAD~10 (last 10 commits)
+- main...HEAD (diff vs b
+- **discover_files** (function, line 86) — Find all analyzable source files in repo.
+- **Cortex** (class, line 136)
+- **_analyze_file** (function, line 137) — Analyze a single file — runs in thread pool.
+- **analyze** (function, line 184)
 
 ## Related Files
-- `.cortexignore.example` [co-change: 100%]
-- `CLAUDE.md` [co-change: 100%]
-- `PLAN.md` [co-change: 100%]
-- `cortex/cli.py` [co-change: 100%]
-- `cortex/generators/claude_md_gen.py` [co-change: 100%]
+- `.claude/docs/cortex/__init__.py.md` [co-change: 100%]
+- `.claude/docs/cortex/__main__.py.md` [co-change: 100%]
+- `.claude/docs/cortex/analyzers/__init__.py.md` [co-change: 100%]
+- `.claude/docs/cortex/analyzers/base.py.md` [co-change: 100%]
+- `.claude/docs/cortex/analyzers/dart_analyzer.py.md` [co-change: 100%]
 
 ## Security Notes
 - ✅ No issues found

@@ -17,10 +17,16 @@ def cli():
 @click.option("--repo", default=".", show_default=True, help="Path to repository")
 @click.option("--since", default=None, help="Analyze commits since (e.g. HEAD~50)")
 @click.option("--lang", multiple=True, help="Filter languages: python, js, ts, dart, go")
-def analyze(repo, since, lang):
+@click.option("--no-cache", is_flag=True, help="Force full re-analysis ignoring cache")
+@click.option("--no-llm", is_flag=True, help="Skip LLM summaries (faster, no API key needed)")
+@click.option("--max-files", default=0, type=int, help="Limit number of files analyzed (0 = no limit)")
+def analyze(repo, since, lang, no_cache, no_llm, max_files):
     """Analyze repository and generate .claude/docs/ context."""
     from .core import Cortex
-    Cortex().analyze(repo_path=repo, since=since, languages=list(lang) or None)
+    Cortex().analyze(
+        repo_path=repo, since=since, languages=list(lang) or None,
+        no_cache=no_cache, no_llm=no_llm, max_files=max_files,
+    )
 
 
 @cli.command()
@@ -131,6 +137,79 @@ def mcp():
     """Start Cortex MCP server (for Claude Code integration)."""
     from .mcp_server import run_mcp_server
     run_mcp_server()
+
+
+@cli.command()
+@click.option("--repo", default=".", show_default=True)
+def status(repo):
+    """Show analysis status for the current project."""
+    import os
+    import json
+    from pathlib import Path
+
+    repo_root = os.path.abspath(repo)
+    docs_dir = Path(repo_root) / '.claude' / 'docs'
+    cache_path = Path(repo_root) / '.cortex-cache.json'
+
+    console.print(f"\n[bold]Cortex Status[/] — {repo_root}\n")
+
+    if not docs_dir.exists():
+        console.print("[yellow]Not analyzed yet.[/] Run: cortex analyze")
+        return
+
+    # Count docs
+    doc_files = list(docs_dir.rglob('*.md'))
+    console.print(f"  Context files: [bold]{len(doc_files)}[/]")
+
+    # Cache info
+    if cache_path.exists():
+        cache = json.loads(cache_path.read_text())
+        last_run = cache.get('_last_run', '')
+        if last_run:
+            console.print(f"  Last analysis: [bold]{last_run}[/]")
+        console.print(f"  Cached files:  [bold]{len([k for k in cache if not k.startswith('_')])}[/]")
+    else:
+        console.print(f"  Cache: [yellow]none[/]")
+
+    # Security summary
+    security_path = docs_dir / 'SECURITY_REPORT.md'
+    if security_path.exists():
+        content = security_path.read_text()
+        if 'No security issues' in content:
+            console.print(f"  Security:      [green]✅ clean[/]")
+        else:
+            console.print(f"  Security:      [red]⚠️  issues found[/] — run: cortex security")
+
+    console.print()
+
+
+@cli.command()
+@click.option("--repo", default=".", show_default=True)
+@click.confirmation_option(prompt="Delete .claude/docs/ and cache?")
+def clean(repo):
+    """Remove all generated context files."""
+    import os
+    import shutil
+    from pathlib import Path
+
+    repo_root = os.path.abspath(repo)
+    docs_dir = Path(repo_root) / '.claude' / 'docs'
+    cache_path = Path(repo_root) / '.cortex-cache.json'
+
+    removed = 0
+    if docs_dir.exists():
+        shutil.rmtree(docs_dir)
+        removed += 1
+        console.print(f"[green]✓[/] Removed .claude/docs/")
+    if cache_path.exists():
+        cache_path.unlink()
+        removed += 1
+        console.print(f"[green]✓[/] Removed .cortex-cache.json")
+
+    if removed == 0:
+        console.print("[dim]Nothing to clean.[/]")
+    else:
+        console.print("[dim]Run cortex analyze to regenerate.[/]")
 
 
 @cli.command()

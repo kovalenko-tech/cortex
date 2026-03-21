@@ -1,29 +1,9 @@
 """Main orchestrator."""
 import os
+import hashlib
+import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-
-
-def get_changed_files(repo_path: str, since: str) -> set[str]:
-    """Return set of relative file paths changed since `since`.
-    
-    Supports:
-    - HEAD~10 (last 10 commits)
-    - main...HEAD (diff vs branch)  
-    - main (diff vs branch, shorthand)
-    - 2024-01-01 (since date)
-    """
-    import git
-    repo = git.Repo(repo_path, search_parent_directories=True)
-    try:
-        # If format is "branch...HEAD" or "branch..HEAD", use as-is (three-dot diff)
-        if '...' in since or '..' in since:
-            diff = repo.git.diff('--name-only', since)
-        else:
-            # Otherwise treat as "since this ref" — get files changed after it
-            diff = repo.git.diff('--name-only', since, 'HEAD')
-        return set(line.strip() for line in diff.splitlines() if line.strip())
-    except git.GitCommandError:
-        return set()
 
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
@@ -52,6 +32,55 @@ SKIP_FILES = {
 }
 
 ANALYZERS = [PythonAnalyzer(), JSAnalyzer(), DartAnalyzer(), GoAnalyzer()]
+
+CACHE_FILE = '.cortex-cache.json'
+
+
+def load_cache(repo_root: str) -> dict:
+    cache_path = Path(repo_root) / CACHE_FILE
+    if cache_path.exists():
+        try:
+            return json.loads(cache_path.read_text())
+        except Exception:
+            pass
+    return {}
+
+
+def save_cache(repo_root: str, cache: dict) -> None:
+    from datetime import datetime
+    cache['_last_run'] = datetime.now().strftime('%Y-%m-%d %H:%M')
+    cache_path = Path(repo_root) / CACHE_FILE
+    cache_path.write_text(json.dumps(cache, indent=2))
+
+
+def file_hash(filepath: str) -> str:
+    try:
+        return hashlib.md5(Path(filepath).read_bytes()).hexdigest()
+    except Exception:
+        return ""
+
+
+def get_changed_files(repo_path: str, since: str) -> set[str]:
+    """Return set of relative file paths changed since `since`.
+    
+    Supports:
+    - HEAD~10 (last 10 commits)
+    - main...HEAD (diff vs branch)  
+    - main (diff vs branch, shorthand)
+    - 2024-01-01 (since date)
+    """
+    import git
+    repo = git.Repo(repo_path, search_parent_directories=True)
+    try:
+        # If format is "branch...HEAD" or "branch..HEAD", use as-is (three-dot diff)
+        if '...' in since or '..' in since:
+            diff = repo.git.diff('--name-only', since)
+        else:
+            # Otherwise treat as "since this ref" — get files changed after it
+            diff = repo.git.diff('--name-only', since, 'HEAD')
+        return set(line.strip() for line in diff.splitlines() if line.strip())
+    except git.GitCommandError:
+        return set()
 
 
 def discover_files(repo_root: str, languages: list[str] | None = None) -> list[str]:
@@ -105,8 +134,56 @@ def discover_files(repo_root: str, languages: list[str] | None = None) -> list[s
 
 
 class Cortex:
+    def _analyze_file(self, filepath, repo_root, cochange_map, no_llm=False):
+        """Analyze a single file — runs in thread pool."""
+        rel = os.path.relpath(filepath, repo_root)
+
+        analyzer = next((a for a in ANALYZERS if a.can_analyze(filepath)), None)
+        analysis = analyzer.analyze(filepath, repo_root) if analyzer else None
+
+        try:
+            insights = git_history.get_insights(repo_root, rel)
+        except Exception:
+            insights = []
+
+        related = cochange.get_related_files(cochange_map, rel)
+
+        security_issues = []
+        secret_findings = []
+        if filepath.endswith('.py'):
+            security_issues = run_bandit(filepath)
+        security_issues += run_semgrep(filepath)
+        try:
+            secret_findings = scan_git_history(repo_root, rel)
+        except Exception:
+            pass
+
+        from .analyzers.base import FileAnalysis
+        if analysis is None:
+            analysis = FileAnalysis(language="unknown")
+
+        content = markdown_gen.generate(
+            filepath, repo_root, insights, related,
+            analysis, security_issues, secret_findings,
+            no_llm=no_llm,
+        )
+        markdown_gen.write_doc(content, filepath, repo_root)
+
+        return {
+            'file': rel,
+            'language': analysis.language,
+            'constructs': len(analysis.constructs),
+            'security_count': len(security_issues) + len(secret_findings),
+            'has_tests': bool(analysis.test_files),
+            'security_issues': [
+                {'file': rel, 'severity': i.severity, 'line': i.line, 'message': i.message}
+                for i in security_issues
+            ],
+        }
+
     def analyze(self, repo_path: str = '.', since: str | None = None,
-                languages: list[str] | None = None) -> None:
+                languages: list[str] | None = None, no_cache: bool = False,
+                no_llm: bool = False, max_files: int = 0) -> None:
         repo_root = os.path.abspath(repo_path)
         console.print(f"\n[bold blue]Cortex[/] analyzing [cyan]{repo_root}[/]\n")
 
@@ -122,6 +199,27 @@ class Cortex:
             files = [f for f in files if os.path.relpath(f, repo_root) in changed]
             console.print(f"[dim]Incremental mode: {len(files)} files changed since {since}[/]")
 
+        # Limit files if requested
+        if max_files > 0:
+            files = files[:max_files]
+
+        # Load cache
+        cache = {} if no_cache else load_cache(repo_root)
+
+        # Filter out unchanged files (cache hit)
+        files_to_analyze = []
+        skipped = 0
+        for f in files:
+            rel = os.path.relpath(f, repo_root)
+            h = file_hash(f)
+            if not no_cache and cache.get(rel) == h:
+                skipped += 1
+            else:
+                files_to_analyze.append((f, rel, h))
+
+        if skipped:
+            console.print(f"[dim]Cache: skipping {skipped} unchanged files[/]")
+
         # Build co-change map once
         console.print(f"[dim]Mining git history...[/]")
         try:
@@ -132,6 +230,8 @@ class Cortex:
         file_results = []
         security_items = []
 
+        max_workers = min(8, os.cpu_count() or 4)
+
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -139,69 +239,35 @@ class Cortex:
             TaskProgressColumn(),
             console=console,
         ) as progress:
-            task = progress.add_task("Analyzing files...", total=len(files))
+            task = progress.add_task("Analyzing files...", total=len(files_to_analyze))
 
-            for filepath in files:
-                rel = os.path.relpath(filepath, repo_root)
-                progress.update(task, description=f"[dim]{rel[:50]}[/]", advance=1)
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                futures = {
+                    executor.submit(self._analyze_file, f, repo_root, cochange_map, no_llm): (f, rel, h)
+                    for f, rel, h in files_to_analyze
+                }
+                for future in as_completed(futures):
+                    progress.advance(task)
+                    f, rel, h = futures[future]
+                    try:
+                        result = future.result()
+                        file_results.append(result)
+                        security_items.extend(result.pop('security_issues', []))
+                        # Update cache entry on success
+                        cache[rel] = h
+                    except Exception:
+                        pass  # skip failed files silently
 
-                # Find right analyzer
-                analyzer = next((a for a in ANALYZERS if a.can_analyze(filepath)), None)
-                analysis = analyzer.analyze(filepath, repo_root) if analyzer else None
-
-                # Git history
-                try:
-                    insights = git_history.get_insights(repo_root, rel)
-                except Exception:
-                    insights = []
-
-                # Co-change
-                related = cochange.get_related_files(cochange_map, rel)
-
-                # Security
-                security_issues = []
-                secret_findings = []
-                if filepath.endswith('.py'):
-                    security_issues = run_bandit(filepath)
-                security_issues += run_semgrep(filepath)
-                try:
-                    secret_findings = scan_git_history(repo_root, rel)
-                except Exception:
-                    pass
-
-                # Generate markdown
-                from .analyzers.base import FileAnalysis
-                if analysis is None:
-                    analysis = FileAnalysis(language="unknown")
-
-                content = markdown_gen.generate(
-                    filepath, repo_root, insights, related,
-                    analysis, security_issues, secret_findings
-                )
-                markdown_gen.write_doc(content, filepath, repo_root)
-
-                # Collect stats
-                file_results.append({
-                    'file': rel,
-                    'language': analysis.language,
-                    'constructs': len(analysis.constructs),
-                    'security_count': len(security_issues) + len(secret_findings),
-                    'has_tests': bool(analysis.test_files),
-                })
-                for issue in security_issues:
-                    security_items.append({
-                        'file': rel, 'severity': issue.severity,
-                        'line': issue.line, 'message': issue.message,
-                    })
+        # Save cache
+        save_cache(repo_root, cache)
 
         # Write summary files
         summary_gen.write_summary(repo_root, file_results)
         summary_gen.write_security_report(repo_root, security_items)
         self._write_helper(repo_root)
 
-        docs_path = os.path.join(repo_root, '.claude', 'docs')
         console.print(f"\n[green]✓[/] Done! Context written to [cyan].claude/docs/[/]")
-        console.print(f"  Files analyzed: [bold]{len(files)}[/]")
+        console.print(f"  Files analyzed: [bold]{len(files_to_analyze)}[/]")
         console.print(f"  Security issues: [bold]{len(security_items)}[/]")
         console.print(f"\n[dim]Commit .claude/ to your repo so Claude Code always has context.[/]\n")
 

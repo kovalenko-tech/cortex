@@ -16,6 +16,7 @@ def generate(
     analysis: FileAnalysis,
     security_issues: list[SecurityIssue],
     secret_findings: list[SecretFinding],
+    no_llm: bool = False,
 ) -> str:
     rel_path = os.path.relpath(filepath, repo_root)
     lines = [f"# {rel_path}", ""]
@@ -29,7 +30,7 @@ def generate(
         lines.append(f"Key imports: {', '.join(analysis.imports[:5])}")
 
     # LLM-enhanced summary (requires ANTHROPIC_API_KEY)
-    llm_summary = generate_summary(
+    llm_summary = None if no_llm else generate_summary(
         filepath, repo_root,
         analysis.constructs if analysis else [],
         analysis.imports if analysis else [],

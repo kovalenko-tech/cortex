@@ -5,12 +5,27 @@ from dataclasses import dataclass
 
 
 SECRET_PATTERNS = [
+    # Real tokens with specific prefixes
     (re.compile(r'ghp_[A-Za-z0-9]{36}'), "GitHub token"),
+    (re.compile(r'ghs_[A-Za-z0-9]{36}'), "GitHub Actions token"),
     (re.compile(r'sk-[A-Za-z0-9]{48}'), "OpenAI API key"),
+    (re.compile(r'sk-ant-[A-Za-z0-9\-_]{90,}'), "Anthropic API key"),
     (re.compile(r'AKIA[0-9A-Z]{16}'), "AWS Access Key"),
-    (re.compile(r'[Pp]assword\s*=\s*["\'][^"\']{8,}["\']'), "Hardcoded password"),
-    (re.compile(r'[Ss]ecret\s*=\s*["\'][^"\']{8,}["\']'), "Hardcoded secret"),
-    (re.compile(r'api[_-]?key\s*=\s*["\'][A-Za-z0-9_\-]{16,}["\']', re.I), "API key"),
+    (re.compile(r'nvapi-[A-Za-z0-9\-_]{50,}'), "NVIDIA API key"),
+    # Hardcoded passwords — require quotes and minimum length, skip test/example patterns
+    (re.compile(r'(?<![_a-zA-Z])password\s*=\s*["\'][^"\']{12,}["\'](?!\s*#\s*example)', re.I), "Hardcoded password"),
+    (re.compile(r'(?<![_a-zA-Z])secret_key\s*=\s*["\'][^"\']{12,}["\']', re.I), "Hardcoded secret key"),
+    # Database URLs with credentials
+    (re.compile(r'(?:postgres|mysql|mongodb)://[^:]+:[^@]{8,}@'), "Database URL with credentials"),
+]
+
+# Skip lines that are clearly tests/examples/comments
+SKIP_PATTERNS = [
+    re.compile(r'#.*example', re.I),
+    re.compile(r'#.*test', re.I),
+    re.compile(r'#.*placeholder', re.I),
+    re.compile(r'test_password|example_password|fake_password|mock_password', re.I),
+    re.compile(r'your[-_](?:api[-_])?key|<your[-_]key>', re.I),
 ]
 
 
@@ -43,6 +58,9 @@ def scan_git_history(repo_path: str, filepath: str, max_commits: int = 50) -> li
                 current_commit = parts[0][:8]
                 current_msg = parts[1]
         elif line.startswith('+') and not line.startswith('+++'):
+            # Skip lines matching skip patterns
+            if any(skip.search(line) for skip in SKIP_PATTERNS):
+                continue
             for pattern, name in SECRET_PATTERNS:
                 if pattern.search(line):
                     findings.append(SecretFinding(
