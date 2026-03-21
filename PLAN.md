@@ -292,3 +292,76 @@ else:
 - [gitleaks](https://gitleaks.io) — secret scanning
 - [GitPython](https://gitpython.readthedocs.io) — git history access
 - [SWE-Bench](https://swebench.com) — coding agent benchmark
+
+---
+
+## Backlog — Next Features
+
+### High Priority
+
+#### MCP Server
+Cortex as an MCP server — Claude Code queries it directly when opening a file. Context is injected automatically via the protocol without reading `.md` files manually. The most native Claude Code integration possible.
+
+```json
+// .claude/settings.json
+{
+  "mcpServers": {
+    "cortex": {
+      "command": "cortex",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+#### Smart CLAUDE.md Generator
+`cortex init` — analyzes the full project and auto-generates `CLAUDE.md`:
+- Project architecture overview
+- Code conventions detected from the codebase
+- Forbidden patterns (from bug fix history)
+- Commands to run tests, build, lint
+- Key files and entry points
+
+Saves ~1 hour of manual documentation work.
+
+#### npx Support
+Zero-install usage:
+```bash
+npx cortex-ai analyze
+```
+No Python required — lowers the barrier for new users significantly.
+
+### Medium Priority
+
+#### Dependency Vulnerability Scan
+`cortex deps` — checks for vulnerable dependencies:
+- Python: `pip-audit`
+- Node.js: `npm audit`
+- Dart/Flutter: `flutter pub outdated`
+
+Results written to `.claude/docs/DEPENDENCIES.md`. Claude Code avoids deprecated APIs automatically.
+
+#### Architecture Map
+Auto-generated Mermaid diagram in `SUMMARY.md`:
+- Module import graph
+- Entry points
+- Heaviest files by complexity
+
+Claude Code understands project structure from the first message.
+
+#### Test Coverage Map
+Shows which files have no test coverage — Claude Code knows the risk areas before making changes.
+
+#### `cortex diff <branch>`
+Updates context only for files changed between current branch and target. Useful in PR review workflows.
+
+### Low Priority
+
+#### `.cortexignore`
+Like `.gitignore` — exclude specific folders/files from analysis. Currently using a hardcoded skip list.
+
+#### VS Code Extension
+- Sidebar panel showing Cortex context when a file is opened
+- Hover tooltip over functions showing historical insights
+- Inline security warnings
+
