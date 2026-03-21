@@ -18,6 +18,10 @@ dependencies = [
 [project.scripts]
 cortex = "cortex.cli:cli"
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cortex*"]
+
 [project.optional-dependencies]
 security = ["bandit>=1.7"]
 full = ["bandit>=1.7", "tree-sitter>=0.21"]

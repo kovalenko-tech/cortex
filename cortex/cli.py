@@ -126,5 +126,43 @@ def init(repo, force):
     console.print(f"[dim]Review and customize it, then commit to your repo.[/]")
 
 
+@cli.command()
+def mcp():
+    """Start Cortex MCP server (for Claude Code integration)."""
+    from .mcp_server import run_mcp_server
+    run_mcp_server()
+
+
+@cli.command()
+@click.option("--repo", default=".", show_default=True)
+def deps(repo):
+    """Scan dependencies for vulnerabilities."""
+    import os
+    from .security.deps_scanner import scan_all_deps, write_deps_report
+    repo_root = os.path.abspath(repo)
+    console.print("[dim]Scanning dependencies...[/]")
+    issues = scan_all_deps(repo_root)
+    path = write_deps_report(repo_root, issues)
+    if issues:
+        for issue in issues[:10]:
+            icon = '🔴' if issue.severity == 'HIGH' else '⚠️'
+            console.print(f"  {icon} [bold]{issue.package}[/] {issue.version}: {issue.description}")
+        console.print(f"\n[dim]Full report: {path}[/]")
+    else:
+        console.print("[green]✅ No issues found.[/]")
+
+
+@cli.command()
+@click.argument("branch", default="main")
+@click.option("--repo", default=".", show_default=True)
+def diff(branch, repo):
+    """Update context only for files changed vs a branch."""
+    import os
+    from .core import Cortex
+    repo_root = os.path.abspath(repo)
+    console.print(f"[dim]Analyzing changes vs {branch}...[/]")
+    Cortex().analyze(repo_path=repo_root, since=f"{branch}...HEAD")
+
+
 if __name__ == "__main__":
     cli()

@@ -174,6 +174,7 @@ class Cortex:
                     'language': analysis.language,
                     'constructs': len(analysis.constructs),
                     'security_count': len(security_issues) + len(secret_findings),
+                    'has_tests': bool(analysis.test_files),
                 })
                 for issue in security_issues:
                     security_items.append({
