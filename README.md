@@ -22,6 +22,14 @@ git add .claude/
 git commit -m "add cortex context"
 ```
 
+## Interactive setup
+
+```bash
+cortex setup
+```
+
+Walks you through: analyze → generate CLAUDE.md → configure MCP → install git hook.
+
 ## Commands
 
 ```

@@ -11,11 +11,11 @@ Key imports: os, json, pathlib, collections
 - **write_claude_md** (function, line 191) — Generate and write CLAUDE.md. Returns path.
 
 ## Related Files
-- `.cortexignore.example` [co-change: 100%]
-- `CLAUDE.md` [co-change: 100%]
-- `PLAN.md` [co-change: 100%]
 - `cortex/cli.py` [co-change: 100%]
 - `cortex/core.py` [co-change: 100%]
+- `PLAN.md` [co-change: 100%]
+- `.cortexignore.example` [co-change: 100%]
+- `CLAUDE.md` [co-change: 100%]
 
 ## Security Notes
 - ✅ No issues found

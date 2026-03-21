@@ -133,6 +133,117 @@ def init(repo, force):
 
 
 @cli.command()
+@click.option("--repo", default=".", show_default=True)
+def setup(repo):
+    """Interactive setup wizard — analyze project and configure Claude Code integration."""
+    import os
+    from pathlib import Path
+
+    repo_root = os.path.abspath(repo)
+    console.print()
+    console.print("[bold]Cortex Setup[/]")
+    console.print("[dim]Let's set up Cortex for your project.[/]")
+    console.print()
+
+    # Step 1: Check if already analyzed
+    docs_dir = Path(repo_root) / '.claude' / 'docs'
+    if docs_dir.exists() and list(docs_dir.rglob('*.md')):
+        count = len(list(docs_dir.rglob('*.md')))
+        console.print(f"[green]✓[/] Already analyzed ({count} context files found)")
+    else:
+        console.print("[bold]Step 1:[/] Analyze your project")
+        console.print("[dim]This scans git history, code structure and security.[/]")
+        console.print()
+        if click.confirm("  Run cortex analyze now?", default=True):
+            from .core import Cortex
+            Cortex().analyze(repo_path=repo_root)
+        else:
+            console.print("[dim]  Skipped. Run cortex analyze manually later.[/]")
+
+    console.print()
+
+    # Step 2: CLAUDE.md
+    claude_md = Path(repo_root) / 'CLAUDE.md'
+    console.print("[bold]Step 2:[/] Generate CLAUDE.md")
+    if claude_md.exists():
+        console.print(f"[green]✓[/] CLAUDE.md already exists")
+    else:
+        console.print("[dim]CLAUDE.md tells Claude Code about your project structure and conventions.[/]")
+        if click.confirm("  Generate CLAUDE.md?", default=True):
+            from .generators.claude_md_gen import write_claude_md
+            write_claude_md(repo_root)
+            console.print(f"[green]✓[/] Generated CLAUDE.md")
+
+    console.print()
+
+    # Step 3: MCP or manual
+    console.print("[bold]Step 3:[/] Claude Code integration")
+    console.print()
+    console.print("  How do you want to use Cortex with Claude Code?")
+    console.print()
+    console.print("  [1] MCP server [dim](automatic — context injected on every file open)[/]")
+    console.print("  [2] Manual     [dim](run python .claude/get_context.py <file> yourself)[/]")
+    console.print("  [3] Skip")
+    console.print()
+
+    choice = click.prompt("  Choice", type=click.Choice(['1', '2', '3']), default='1')
+
+    if choice == '1':
+        settings_path = Path(repo_root) / '.claude' / 'settings.json'
+        settings_path.parent.mkdir(parents=True, exist_ok=True)
+        import json
+        existing = {}
+        if settings_path.exists():
+            try:
+                existing = json.loads(settings_path.read_text())
+            except Exception:
+                pass
+        existing.setdefault('mcpServers', {})['cortex'] = {"command": "cortex", "args": ["mcp"]}
+        settings_path.write_text(json.dumps(existing, indent=2))
+        console.print(f"[green]✓[/] MCP server configured in .claude/settings.json")
+        console.print("[dim]  Restart Claude Code to activate.[/]")
+
+    elif choice == '2':
+        # Add to CLAUDE.md if exists
+        if claude_md.exists():
+            content = claude_md.read_text()
+            if 'get_context.py' not in content:
+                content += '\n\n## Cortex Context\n\nBefore editing any file, run:\n```bash\npython .claude/get_context.py <file_path>\n```\n'
+                claude_md.write_text(content)
+                console.print(f"[green]✓[/] Added context instructions to CLAUDE.md")
+        else:
+            console.print("[dim]  Run cortex init first to create CLAUDE.md[/]")
+
+    console.print()
+
+    # Step 4: Auto-update hook
+    console.print("[bold]Step 4:[/] Keep context fresh")
+    console.print("[dim]Install a git hook to auto-update context on every commit.[/]")
+
+    hook_path = Path(repo_root) / '.git' / 'hooks' / 'pre-commit'
+    if hook_path.exists() and 'cortex' in hook_path.read_text():
+        console.print(f"[green]✓[/] Pre-commit hook already installed")
+    elif click.confirm("  Install pre-commit hook?", default=True):
+        import stat
+        hook_content = '#!/bin/bash\n# Cortex: update context for staged files\ncortex analyze --since HEAD --no-cache 2>/dev/null || true\ngit add .claude/docs/ 2>/dev/null || true\n'
+        hook_path.write_text(hook_content)
+        hook_path.chmod(hook_path.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+        console.print(f"[green]✓[/] Pre-commit hook installed")
+
+    console.print()
+
+    # Step 5: Commit
+    console.print("[bold]Step 5:[/] Commit to your repo")
+    console.print()
+    console.print("  [cyan]git add .claude/ CLAUDE.md[/]")
+    console.print("  [cyan]git commit -m 'add cortex context'[/]")
+    console.print()
+    console.print("[bold green]✓ Setup complete![/]")
+    console.print("[dim]Claude Code now has full context for your project.[/]")
+    console.print()
+
+
+@cli.command()
 def mcp():
     """Start Cortex MCP server (for Claude Code integration)."""
     from .mcp_server import run_mcp_server

@@ -1,10 +1,12 @@
 # cortex/core.py
 
 ## Overview
-Language: python | Constructs: 9
+Language: python | Constructs: 10
 Key imports: os, hashlib, json, concurrent.futures, pathlib
 
 ## Historical Insights
+- [Bug Fix] 2026-03-21: perf+fix: parallel analysis, file caching, status/clean commands, fix imports, better secrets scanner, --no-llm/--max-files flags
+  Change: cortex/core.py | 226 +++++++++++++++++++++++++++++++++++++--------------------
 - [Bug Fix] 2026-03-21: fix: cortex diff — handle branch...HEAD and branch..HEAD syntax correctly
   Change: cortex/core.py | 16 ++++++++++++++--
 
@@ -20,14 +22,14 @@ Supports:
 - **discover_files** (function, line 86) — Find all analyzable source files in repo.
 - **Cortex** (class, line 136)
 - **_analyze_file** (function, line 137) — Analyze a single file — runs in thread pool.
-- **analyze** (function, line 184)
+- **_print_completion** (function, line 184)
 
 ## Related Files
+- `.claude/docs/cortex/core.py.md` [co-change: 100%]
+- `cortex/cli.py` [co-change: 100%]
+- `cortex/generators/markdown_gen.py` [co-change: 100%]
+- `cortex/security/secrets_scanner.py` [co-change: 100%]
 - `.claude/docs/cortex/__init__.py.md` [co-change: 100%]
-- `.claude/docs/cortex/__main__.py.md` [co-change: 100%]
-- `.claude/docs/cortex/analyzers/__init__.py.md` [co-change: 100%]
-- `.claude/docs/cortex/analyzers/base.py.md` [co-change: 100%]
-- `.claude/docs/cortex/analyzers/dart_analyzer.py.md` [co-change: 100%]
 
 ## Security Notes
 - ✅ No issues found

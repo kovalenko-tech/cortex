@@ -181,9 +181,72 @@ class Cortex:
             ],
         }
 
+    def _print_completion(self, repo_root, file_results, security_items, start_time):
+        import time
+        from pathlib import Path
+
+        elapsed = time.time() - start_time
+        is_first_run = not (Path(repo_root) / '.cortex-cache.json').exists()
+
+        console.print()
+        console.rule("[bold green]Analysis Complete[/]")
+        console.print()
+
+        # Stats
+        console.print(f"  [green]✓[/] [bold]{len(file_results)}[/] files analyzed in {elapsed:.1f}s")
+
+        lang_counts = {}
+        for r in file_results:
+            lang = r.get('language', 'unknown')
+            lang_counts[lang] = lang_counts.get(lang, 0) + 1
+        lang_str = '  '.join(f"[cyan]{lang}[/] {count}" for lang, count in sorted(lang_counts.items()) if lang != 'unknown')
+        if lang_str:
+            console.print(f"  [green]✓[/] Languages: {lang_str}")
+
+        files_without_tests = sum(1 for r in file_results if not r.get('has_tests'))
+        if files_without_tests > 0:
+            console.print(f"  [yellow]⚠[/]  {files_without_tests} files without tests")
+
+        if security_items:
+            high = sum(1 for i in security_items if i.get('severity') == 'HIGH')
+            console.print(f"  [red]⚠[/]  {len(security_items)} security issues ({high} high) — run [bold]cortex security[/]")
+        else:
+            console.print(f"  [green]✓[/] No security issues found")
+
+        console.print()
+        console.print(f"  Context written to [cyan].claude/docs/[/]")
+        console.print()
+
+        # Next steps — show on first run
+        if is_first_run:
+            console.rule("[bold]Next Steps[/]")
+            console.print()
+            console.print("  [bold]Option A — Manual (works now):[/]")
+            console.print("  Add to your CLAUDE.md:")
+            console.print()
+            console.print('  [dim]Before editing any file, run:[/]')
+            console.print('  [cyan]python .claude/get_context.py <file_path>[/]')
+            console.print()
+            console.print("  [bold]Option B — Automatic via MCP:[/]")
+            console.print("  Add to [cyan].claude/settings.json[/]:")
+            console.print()
+            console.print('  [dim]{"mcpServers": {"cortex": {"command": "cortex", "args": ["mcp"]}}}[/]')
+            console.print()
+            console.print("  [bold]Commit to your repo:[/]")
+            console.print("  [cyan]git add .claude/ && git commit -m 'add cortex context'[/]")
+            console.print()
+            console.print("  [bold]Keep context fresh:[/]")
+            console.print("  [cyan]cortex install-hook[/]  [dim]# auto-update on every commit[/]")
+            console.print()
+        else:
+            console.print("  Run [cyan]cortex status[/] for details")
+            console.print()
+
     def analyze(self, repo_path: str = '.', since: str | None = None,
                 languages: list[str] | None = None, no_cache: bool = False,
                 no_llm: bool = False, max_files: int = 0) -> None:
+        import time
+        start_time = time.time()
         repo_root = os.path.abspath(repo_path)
         console.print(f"\n[bold blue]Cortex[/] analyzing [cyan]{repo_root}[/]\n")
 
@@ -266,10 +329,7 @@ class Cortex:
         summary_gen.write_security_report(repo_root, security_items)
         self._write_helper(repo_root)
 
-        console.print(f"\n[green]✓[/] Done! Context written to [cyan].claude/docs/[/]")
-        console.print(f"  Files analyzed: [bold]{len(files_to_analyze)}[/]")
-        console.print(f"  Security issues: [bold]{len(security_items)}[/]")
-        console.print(f"\n[dim]Commit .claude/ to your repo so Claude Code always has context.[/]\n")
+        self._print_completion(repo_root, file_results, security_items, start_time)
 
     def _write_helper(self, repo_root: str) -> None:
         helper = Path(repo_root) / ".claude" / "get_context.py"

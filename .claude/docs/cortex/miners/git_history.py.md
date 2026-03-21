@@ -10,11 +10,11 @@ Key imports: re, dataclasses, typing, git
 - **get_insights** (function, line 29) — Return historical insights for a file from git log.
 
 ## Related Files
-- `PLAN.md` [co-change: 100%]
+- `README.md` [co-change: 100%]
+- `.claude/docs/SUMMARY.md` [co-change: 100%]
 - `cortex/cli.py` [co-change: 100%]
 - `cortex/core.py` [co-change: 100%]
-- `README.md` [co-change: 100%]
-- `.claude/docs/SECURITY_REPORT.md` [co-change: 100%]
+- `cortex/generators/markdown_gen.py` [co-change: 100%]
 
 ## Security Notes
 - ✅ No issues found

@@ -9,11 +9,11 @@ Key imports: collections, git
 - **get_related_files** (function, line 45) — Return top N related files for a given file, sorted by score desc.
 
 ## Related Files
-- `PLAN.md` [co-change: 100%]
+- `README.md` [co-change: 100%]
+- `.claude/docs/SUMMARY.md` [co-change: 100%]
 - `cortex/cli.py` [co-change: 100%]
 - `cortex/core.py` [co-change: 100%]
-- `README.md` [co-change: 100%]
-- `.claude/docs/SECURITY_REPORT.md` [co-change: 100%]
+- `cortex/generators/markdown_gen.py` [co-change: 100%]
 
 ## Security Notes
 - ✅ No issues found
