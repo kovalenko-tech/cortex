@@ -365,3 +365,14 @@ Like `.gitignore` — exclude specific folders/files from analysis. Currently us
 - Hover tooltip over functions showing historical insights
 - Inline security warnings
 
+
+### Evaluation & Benchmarks
+
+#### cortex-gym benchmark
+Public benchmark dataset (like SWE-Bench) to measure how much Cortex improves Claude Code:
+- 150+ real GitHub issues with test suites
+- Compare baseline (no context) vs cortex (with .claude/docs/)
+- Publish results per model (Haiku / Sonnet / Opus)
+- Reference: codeset-ai/codeset-release-evals shows +7-10pp improvement with context injection
+
+This gives Cortex credibility and a concrete value proposition: "Cortex improves Claude Code task resolution by ~10%."
