@@ -1,0 +1,16 @@
+# .cortexignore — exclude files/dirs from cortex analysis
+# Syntax like .gitignore
+
+# Generated files
+migrations/
+*_pb2.py
+*.generated.ts
+
+# Large data files
+data/
+fixtures/
+seeds/
+
+# Vendored code
+vendor/
+third_party/

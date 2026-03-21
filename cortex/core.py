@@ -69,6 +69,26 @@ def discover_files(repo_root: str, languages: list[str] | None = None) -> list[s
                 full = os.path.join(root, f)
                 if os.path.getsize(full) < 500_000:
                     files.append(full)
+
+    # Load .cortexignore patterns
+    import fnmatch
+    ignore_patterns = []
+    cortexignore = Path(repo_root) / '.cortexignore'
+    if cortexignore.exists():
+        for line in cortexignore.read_text().splitlines():
+            line = line.strip()
+            if line and not line.startswith('#'):
+                ignore_patterns.append(line)
+
+    # Filter files
+    if ignore_patterns:
+        filtered = []
+        for f in files:
+            rel = os.path.relpath(f, repo_root)
+            if not any(fnmatch.fnmatch(rel, p) for p in ignore_patterns):
+                filtered.append(f)
+        files = filtered
+
     return files
 
 

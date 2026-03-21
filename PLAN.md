@@ -314,7 +314,7 @@ Cortex as an MCP server — Claude Code queries it directly when opening a file.
 }
 ```
 
-#### Smart CLAUDE.md Generator
+#### Smart CLAUDE.md Generator ✅
 `cortex init` — analyzes the full project and auto-generates `CLAUDE.md`:
 - Project architecture overview
 - Code conventions detected from the codebase
@@ -357,7 +357,7 @@ Updates context only for files changed between current branch and target. Useful
 
 ### Low Priority
 
-#### `.cortexignore`
+#### `.cortexignore` ✅
 Like `.gitignore` — exclude specific folders/files from analysis. Currently using a hardcoded skip list.
 
 #### VS Code Extension

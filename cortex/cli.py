@@ -105,5 +105,26 @@ def watch(repo, interval):
             time.sleep(interval)
 
 
+@cli.command()
+@click.option("--repo", default=".", show_default=True, help="Path to repository")
+@click.option("--force", is_flag=True, help="Overwrite existing CLAUDE.md")
+def init(repo, force):
+    """Generate CLAUDE.md for your project."""
+    import os
+    from pathlib import Path
+    from .generators.claude_md_gen import write_claude_md
+
+    repo_root = os.path.abspath(repo)
+    claude_md = Path(repo_root) / 'CLAUDE.md'
+
+    if claude_md.exists() and not force:
+        console.print(f"[yellow]CLAUDE.md already exists.[/] Use --force to overwrite.")
+        return
+
+    path = write_claude_md(repo_root)
+    console.print(f"[green]✓[/] Generated [cyan]CLAUDE.md[/]")
+    console.print(f"[dim]Review and customize it, then commit to your repo.[/]")
+
+
 if __name__ == "__main__":
     cli()
