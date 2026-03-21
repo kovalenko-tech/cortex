@@ -145,6 +145,24 @@
       pointer-events: none;
     }
 
+    .hero-glow {
+      position: absolute;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+      animation: pulse-glow 4s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .hero .container {
+      position: relative;
+      z-index: 1;
+    }
+
     .hero-badge {
       display: inline-flex;
       align-items: center;
@@ -159,7 +177,7 @@
       margin-bottom: 32px;
     }
 
-    .hero h1 {
+    .hero-title {
       font-size: clamp(36px, 6vw, 64px);
       font-weight: 700;
       line-height: 1.1;
@@ -170,9 +188,18 @@
       margin-right: auto;
     }
 
-    .hero h1 em {
+    .hero-title em {
       font-style: normal;
       color: var(--accent);
+    }
+
+    .hero-title .highlight {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6, #06b6d4, #6366f1);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradient-shift 4s ease infinite;
     }
 
     .hero-sub {
@@ -206,6 +233,19 @@
     .install-cmd {
       overflow-x: auto;
       white-space: nowrap;
+      display: flex;
+      align-items: center;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1em;
+      background: #6366f1;
+      margin-left: 2px;
+      animation: blink 1s step-end infinite;
+      vertical-align: text-bottom;
+      flex-shrink: 0;
     }
 
     .copy-btn {
@@ -217,7 +257,7 @@
       font-size: 12px;
       padding: 4px 10px;
       cursor: pointer;
-      transition: background 0.15s;
+      transition: background 0.15s, color 0.2s, border-color 0.2s;
       font-family: inherit;
     }
 
@@ -388,12 +428,13 @@
       border: 1px solid var(--border);
       border-radius: 16px;
       padding: 28px;
-      transition: border-color 0.2s, transform 0.2s;
+      transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;
     }
 
     .feature-card:hover {
-      border-color: rgba(99, 102, 241, 0.4);
-      transform: translateY(-2px);
+      border-color: rgba(99,102,241,0.5);
+      box-shadow: 0 0 30px rgba(99,102,241,0.1), 0 8px 32px rgba(0,0,0,0.3);
+      transform: translateY(-4px);
     }
 
     .feature-icon {
@@ -466,6 +507,10 @@
       font-size: 13.5px;
       line-height: 1.8;
       background: var(--code-bg);
+    }
+
+    .terminal-line {
+      display: block;
     }
 
     .t-prompt { color: var(--accent); }
@@ -594,6 +639,34 @@
     .fade-up-3 { animation-delay: 0.3s; opacity: 0; }
     .fade-up-4 { animation-delay: 0.4s; opacity: 0; }
 
+    /* ── MICRO-ANIMATIONS ── */
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.7; }
+      50% { transform: translateX(-50%) scale(1.1); opacity: 1; }
+    }
+
+    @keyframes gradient-shift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .scroll-reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .scroll-reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 860px) {
       .problem-inner { grid-template-columns: 1fr; gap: 48px; }
@@ -625,22 +698,23 @@
 
   <!-- HERO -->
   <section class="hero">
+    <div class="hero-glow"></div>
     <div class="container">
       <div class="hero-badge fade-up fade-up-1">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
         Context-aware AI coding
       </div>
-      <h1 class="fade-up fade-up-2">
-        Claude Code doesn't know<br>your codebase.<br><em>Cortex does.</em>
+      <h1 class="hero-title fade-up fade-up-2">
+        Claude Code doesn't know<br>your codebase.<br><em><span class="highlight">Cortex does.</span></em>
       </h1>
       <p class="hero-sub fade-up fade-up-3">
         One command gives Claude Code full project context — git history, risk scores, PR decisions, security notes. Generated from your actual code, not written by hand.
       </p>
       <div class="fade-up fade-up-4">
-        <div class="install-box">
+        <div class="install-box install-block">
           <span class="prompt">$</span>
-          <span class="install-cmd">curl -fsSL https://raw.githubusercontent.com/kovalenko-tech/cortex/main/install.sh | bash</span>
-          <button class="copy-btn" onclick="copyInstall(this)">copy</button>
+          <span class="install-cmd"><span id="typed-cmd"></span><span class="cursor"></span></span>
+          <button class="copy-btn">copy</button>
         </div>
       </div>
     </div>
@@ -761,25 +835,25 @@
             <span class="terminal-title">~/myproject</span>
           </div>
           <div class="terminal-body">
-            <span class="t-prompt">$ </span><span class="t-cmd">cortex analyze</span>
+            <span class="terminal-line"><span class="t-prompt">$ </span><span class="t-cmd">cortex analyze</span></span>
             <span class="t-blank"></span>
-            <span class="t-dim">Analyzing 47 files...</span>
+            <span class="terminal-line"><span class="t-dim">Analyzing 47 files...</span></span>
             <span class="t-blank"></span>
-            <span class="t-ok">✓ 47 files analyzed in 8.3s</span><br>
-            <span class="t-ok">✓ Languages: dart 31&nbsp;&nbsp;typescript 16</span><br>
-            <span class="t-warn">⚠  4 files without tests</span><br>
-            <span class="t-warn">⚠  2 security issues found — run cortex security</span>
+            <span class="terminal-line"><span class="t-ok">✓ 47 files analyzed in 8.3s</span></span>
+            <span class="terminal-line"><span class="t-ok">✓ Languages: dart 31&nbsp;&nbsp;typescript 16</span></span>
+            <span class="terminal-line"><span class="t-warn">⚠  4 files without tests</span></span>
+            <span class="terminal-line"><span class="t-warn">⚠  2 security issues found — run cortex security</span></span>
             <span class="t-blank"></span>
-            <span class="t-sep">─────────────── Next Steps ───────────────</span>
+            <span class="terminal-line"><span class="t-sep">─────────────── Next Steps ───────────────</span></span>
             <span class="t-blank"></span>
-            <span class="t-dim">Quick setup wizard:</span><br>
-            <span class="t-info">&nbsp;&nbsp;cortex setup</span>
+            <span class="terminal-line"><span class="t-dim">Quick setup wizard:</span></span>
+            <span class="terminal-line"><span class="t-info">&nbsp;&nbsp;cortex setup</span></span>
             <span class="t-blank"></span>
-            <span class="t-dim">Or configure MCP manually:</span><br>
-            <span class="t-info">&nbsp;&nbsp;{"mcpServers": {"cortex": {"command": "cortex", "args": ["mcp"]}}}</span>
+            <span class="terminal-line"><span class="t-dim">Or configure MCP manually:</span></span>
+            <span class="terminal-line"><span class="t-info">&nbsp;&nbsp;{"mcpServers": {"cortex": {"command": "cortex", "args": ["mcp"]}}}</span></span>
             <span class="t-blank"></span>
-            <span class="t-dim">Commit:</span><br>
-            <span class="t-info">&nbsp;&nbsp;git add .claude/ &amp;&amp; git commit -m 'add cortex context'</span>
+            <span class="terminal-line"><span class="t-dim">Commit:</span></span>
+            <span class="terminal-line"><span class="t-info">&nbsp;&nbsp;git add .claude/ &amp;&amp; git commit -m 'add cortex context'</span></span>
           </div>
         </div>
       </div>
@@ -824,10 +898,10 @@
       <p class="section-label">Ready?</p>
       <h2 class="section-title">Give Claude Code the context it needs</h2>
       <p class="section-desc">Stop re-explaining your codebase every session. Run Cortex once and commit the result.</p>
-      <div class="install-box" style="margin: 0 auto; display: inline-flex;">
+      <div class="install-box install-block" style="margin: 0 auto; display: inline-flex;">
         <span class="prompt">$</span>
-        <span class="install-cmd">curl -fsSL https://raw.githubusercontent.com/kovalenko-tech/cortex/main/install.sh | bash</span>
-        <button class="copy-btn" onclick="copyInstall(this)">copy</button>
+        <span class="install-cmd"><code>curl -fsSL https://raw.githubusercontent.com/kovalenko-tech/cortex/main/install.sh | bash</code></span>
+        <button class="copy-btn">copy</button>
       </div>
     </div>
   </section>
@@ -844,13 +918,118 @@
   </footer>
 
   <script>
-    function copyInstall(btn) {
-      const cmd = 'curl -fsSL https://raw.githubusercontent.com/kovalenko-tech/cortex/main/install.sh | bash';
-      navigator.clipboard.writeText(cmd).then(() => {
-        btn.textContent = 'copied!';
-        setTimeout(() => { btn.textContent = 'copy'; }, 2000);
+    /* ── TYPING EFFECT ── */
+    function typeInstallCmd() {
+      const target = document.getElementById('typed-cmd');
+      if (!target) return;
+      const text = 'curl -fsSL https://raw.githubusercontent.com/kovalenko-tech/cortex/main/install.sh | bash';
+      let i = 0;
+      target.textContent = '';
+
+      function type() {
+        if (i < text.length) {
+          target.textContent += text[i];
+          i++;
+          setTimeout(type, 30);
+        }
+      }
+
+      setTimeout(type, 800);
+    }
+
+    /* ── FEATURE CARD STAGGER ── */
+    function initCardStagger() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry, i) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => {
+              entry.target.style.opacity = '1';
+              entry.target.style.transform = 'translateY(0)';
+            }, i * 80);
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.feature-card').forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(24px)';
+        card.style.transition = 'opacity 0.5s ease, transform 0.5s ease, border-color 0.3s, box-shadow 0.3s';
+        observer.observe(card);
       });
     }
+
+    /* ── TERMINAL LINE REVEAL ── */
+    function initTerminalReveal() {
+      const terminalObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const lines = entry.target.querySelectorAll('.terminal-line');
+            lines.forEach((line, i) => {
+              line.style.opacity = '0';
+              setTimeout(() => {
+                line.style.opacity = '1';
+                line.style.transition = 'opacity 0.3s ease';
+              }, i * 150);
+            });
+            terminalObserver.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.3 });
+
+      const terminal = document.querySelector('.terminal-body');
+      if (terminal) terminalObserver.observe(terminal);
+    }
+
+    /* ── COPY BUTTON ── */
+    function initCopyButtons() {
+      document.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const block = btn.closest('.install-block');
+          const cmdEl = block?.querySelector('#typed-cmd, code');
+          const cmd = cmdEl?.textContent?.trim();
+          if (!cmd) return;
+          try {
+            await navigator.clipboard.writeText(cmd);
+            const original = btn.innerHTML;
+            btn.innerHTML = '✓';
+            btn.style.color = '#4ade80';
+            btn.style.borderColor = '#4ade80';
+            setTimeout(() => {
+              btn.innerHTML = original;
+              btn.style.color = '';
+              btn.style.borderColor = '';
+            }, 2000);
+          } catch {}
+        });
+      });
+    }
+
+    /* ── SECTION SCROLL FADE ── */
+    function initScrollReveal() {
+      const fadeObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            fadeObserver.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('section:not(.hero)').forEach(section => {
+        section.classList.add('scroll-reveal');
+        fadeObserver.observe(section);
+      });
+    }
+
+    /* ── INIT ── */
+    document.addEventListener('DOMContentLoaded', () => {
+      typeInstallCmd();
+      initCardStagger();
+      initTerminalReveal();
+      initCopyButtons();
+      initScrollReveal();
+    });
   </script>
 
 </body>
