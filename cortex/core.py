@@ -4,11 +4,23 @@ from pathlib import Path
 
 
 def get_changed_files(repo_path: str, since: str) -> set[str]:
-    """Return set of relative file paths changed since `since` (e.g. HEAD~10, 2024-01-01)."""
+    """Return set of relative file paths changed since `since`.
+    
+    Supports:
+    - HEAD~10 (last 10 commits)
+    - main...HEAD (diff vs branch)  
+    - main (diff vs branch, shorthand)
+    - 2024-01-01 (since date)
+    """
     import git
     repo = git.Repo(repo_path, search_parent_directories=True)
     try:
-        diff = repo.git.diff('--name-only', since, 'HEAD')
+        # If format is "branch...HEAD" or "branch..HEAD", use as-is (three-dot diff)
+        if '...' in since or '..' in since:
+            diff = repo.git.diff('--name-only', since)
+        else:
+            # Otherwise treat as "since this ref" — get files changed after it
+            diff = repo.git.diff('--name-only', since, 'HEAD')
         return set(line.strip() for line in diff.splitlines() if line.strip())
     except git.GitCommandError:
         return set()
