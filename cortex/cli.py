@@ -86,6 +86,77 @@ fi
 
 @cli.command()
 @click.option("--repo", default=".", show_default=True)
+@click.option("--stale-only", is_flag=True, help="Show only stale/outdated files")
+def freshness(repo, stale_only):
+    """Show how fresh the context is for each file."""
+    import os
+    from pathlib import Path
+    from .freshness import load_cortex_cache, get_file_freshness
+
+    repo_root = os.path.abspath(repo)
+    docs_dir = Path(repo_root) / '.claude' / 'docs'
+
+    if not docs_dir.exists():
+        console.print("[yellow]No context found.[/] Run: cortex analyze")
+        return
+
+    cache = load_cortex_cache(repo_root)
+    if not cache:
+        console.print("[yellow]No cache found.[/] Run: cortex analyze to generate fresh context.")
+        return
+
+    # Get all analyzed files from cache
+    files = [k for k in cache.keys() if not k.startswith('_')]
+
+    if not files:
+        console.print("[yellow]No files in cache.[/]")
+        return
+
+    fresh_count = stale_count = outdated_count = unknown_count = 0
+    results = []
+
+    for rel_path in sorted(files):
+        info = get_file_freshness(repo_root, rel_path, cache)
+        results.append(info)
+        if info.score == 'FRESH':
+            fresh_count += 1
+        elif info.score == 'STALE':
+            stale_count += 1
+        elif info.score == 'OUTDATED':
+            outdated_count += 1
+        else:
+            unknown_count += 1
+
+    # Summary
+    console.print()
+    console.print(f"[bold]Context Freshness[/] — {repo_root}")
+    console.print()
+    console.print(f"  ⚡ Fresh:    [green]{fresh_count}[/]")
+    console.print(f"  ⚠️  Stale:    [yellow]{stale_count}[/]")
+    console.print(f"  ❌ Outdated: [red]{outdated_count}[/]")
+    console.print()
+
+    # Show stale/outdated files
+    problem_files = [r for r in results if r.score in ('STALE', 'OUTDATED')]
+    if problem_files:
+        console.print("[bold]Files needing refresh:[/]")
+        for info in sorted(problem_files, key=lambda x: x.days_since, reverse=True)[:20]:
+            days = f"{info.days_since:.0f}d ago"
+            commits = f"+{info.commits_since} commits" if info.commits_since else ""
+            console.print(f"  {info.icon} [cyan]{info.file}[/] [dim]{days} {commits}[/]")
+        console.print()
+        max_commits = max(p.commits_since for p in problem_files)
+        if max_commits > 0:
+            console.print(f"  Run [cyan]cortex analyze --since HEAD~{max_commits}[/] to refresh")
+        else:
+            console.print(f"  Run [cyan]cortex analyze[/] to refresh")
+    else:
+        console.print("[green]All context is fresh! ✓[/]")
+    console.print()
+
+
+@cli.command()
+@click.option("--repo", default=".", show_default=True)
 @click.option("--interval", default=30, show_default=True, help="Poll interval in seconds")
 def watch(repo, interval):
     """Watch for file changes and auto-update context."""
@@ -290,6 +361,22 @@ def status(repo):
             console.print(f"  Security:      [green]✅ clean[/]")
         else:
             console.print(f"  Security:      [red]⚠️  issues found[/] — run: cortex security")
+
+    # Freshness summary
+    from .freshness import load_cortex_cache, get_file_freshness
+    cache_data = load_cortex_cache(repo_root)
+    cache_files = [k for k in cache_data.keys() if not k.startswith('_')]
+    if cache_files:
+        fresh = stale = outdated = 0
+        for f in cache_files:
+            info = get_file_freshness(repo_root, f, cache_data)
+            if info.score == 'FRESH':
+                fresh += 1
+            elif info.score == 'STALE':
+                stale += 1
+            elif info.score == 'OUTDATED':
+                outdated += 1
+        console.print(f"  Freshness:     ⚡{fresh} fresh  ⚠️{stale} stale  ❌{outdated} outdated")
 
     console.print()
 

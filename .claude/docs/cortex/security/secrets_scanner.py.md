@@ -1,5 +1,7 @@
 # cortex/security/secrets_scanner.py
 
+> ⚡ **Fresh** — analyzed 2026-03-21 21:50 UTC
+
 ## Overview
 Language: python | Constructs: 2
 Key imports: re, git, dataclasses

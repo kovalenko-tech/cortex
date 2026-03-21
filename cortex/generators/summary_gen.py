@@ -1,4 +1,5 @@
 """Generate SUMMARY.md and SECURITY_REPORT.md."""
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -64,6 +65,12 @@ def write_summary(repo_root: str, file_results: list[dict]) -> None:
         for r in uncovered[:15]:
             lines.append(f"- `{r['file']}`")
         lines.append("")
+
+    # Freshness section
+    lines.append("## Context Freshness")
+    lines.append(f"Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
+    lines.append(f"Files: {len(file_results)} analyzed")
+    lines.append("")
 
     out = Path(repo_root) / ".claude" / "docs" / "SUMMARY.md"
     out.parent.mkdir(parents=True, exist_ok=True)

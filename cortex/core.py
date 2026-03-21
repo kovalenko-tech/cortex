@@ -159,13 +159,16 @@ class Cortex:
             pass
 
         from .analyzers.base import FileAnalysis
+        from datetime import datetime, timezone
         if analysis is None:
             analysis = FileAnalysis(language="unknown")
 
+        analyzed_at = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
         content = markdown_gen.generate(
             filepath, repo_root, insights, related,
             analysis, security_issues, secret_findings,
             no_llm=no_llm,
+            analyzed_at=analyzed_at,
         )
         markdown_gen.write_doc(content, filepath, repo_root)
 

@@ -1,5 +1,7 @@
 # cortex/generators/claude_md_gen.py
 
+> ⚡ **Fresh** — analyzed 2026-03-21 21:50 UTC
+
 ## Overview
 Language: python | Constructs: 4
 Key imports: os, json, pathlib, collections

@@ -1,35 +1,39 @@
 # Project Summary — Cortex Analysis
 
-**Files analyzed:** 26
-**Total constructs:** 75
+**Files analyzed:** 27
+**Total constructs:** 81
 **Security issues:** 0
 
 ## Languages
 - javascript: 2 files
-- python: 24 files
+- python: 25 files
 
 ## Architecture
 ```mermaid
 graph TD
     npm["npm/\n2 files"]
-    cortex["cortex/\n24 files"]
+    cortex["cortex/\n25 files"]
 ```
 
 ## Files Without Tests
-**26 files** have no associated test files:
+**27 files** have no associated test files:
 
-- `npm/bin/cortex.js`
 - `npm/bin/install.js`
-- `cortex/__init__.py`
+- `npm/bin/cortex.js`
+- `cortex/freshness.py`
 - `cortex/core.py`
-- `cortex/cli.py`
+- `cortex/__init__.py`
 - `cortex/__main__.py`
-- `cortex/miners/cochange.py`
+- `cortex/cli.py`
 - `cortex/mcp_server.py`
-- `cortex/miners/git_history.py`
 - `cortex/miners/__init__.py`
-- `cortex/analyzers/js_analyzer.py`
+- `cortex/miners/cochange.py`
 - `cortex/analyzers/python_analyzer.py`
+- `cortex/miners/git_history.py`
+- `cortex/analyzers/js_analyzer.py`
 - `cortex/analyzers/__init__.py`
 - `cortex/analyzers/base.py`
-- `cortex/analyzers/go_analyzer.py`
+
+## Context Freshness
+Generated: 2026-03-21 21:50 UTC
+Files: 27 analyzed

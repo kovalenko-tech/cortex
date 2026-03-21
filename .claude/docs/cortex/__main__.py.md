@@ -1,5 +1,7 @@
 # cortex/__main__.py
 
+> ⚡ **Fresh** — analyzed 2026-03-21 21:50 UTC
+
 ## Overview
 Language: python | Constructs: 0
 Key imports: cortex.cli

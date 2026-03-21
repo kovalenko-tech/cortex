@@ -1,5 +1,6 @@
 """Generate .claude/docs/<filepath>.md context files."""
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 from ..miners.git_history import HistoricalInsight
 from ..analyzers.base import FileAnalysis
@@ -11,15 +12,17 @@ from .llm_summary import generate_summary
 def generate(
     filepath: str,
     repo_root: str,
-    insights: list[HistoricalInsight],
-    related_files: list[tuple[str, float]],
-    analysis: FileAnalysis,
-    security_issues: list[SecurityIssue],
-    secret_findings: list[SecretFinding],
+    insights: list,
+    related_files: list,
+    analysis,
+    security_issues: list,
+    secret_findings: list,
     no_llm: bool = False,
+    analyzed_at: str = "",
 ) -> str:
     rel_path = os.path.relpath(filepath, repo_root)
-    lines = [f"# {rel_path}", ""]
+    now_str = analyzed_at or datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
+    lines = [f"# {rel_path}", "", f"> ⚡ **Fresh** — analyzed {now_str}", ""]
 
     # Overview
     lines.append("## Overview")

@@ -1,5 +1,7 @@
 # npm/bin/cortex.js
 
+> ⚡ **Fresh** — analyzed 2026-03-21 21:50 UTC
+
 ## Overview
 Language: javascript | Constructs: 5
 Key imports: child_process

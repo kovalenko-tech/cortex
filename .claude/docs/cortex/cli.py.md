@@ -1,7 +1,9 @@
 # cortex/cli.py
 
+> ⚡ **Fresh** — analyzed 2026-03-21 21:50 UTC
+
 ## Overview
-Language: python | Constructs: 13
+Language: python | Constructs: 14
 Key imports: click, pathlib, rich.console, core, pathlib
 
 ## Historical Insights
@@ -14,16 +16,16 @@ Key imports: click, pathlib, rich.console, core, pathlib
 - **context** (function, line 34) — Print context for a specific file.
 - **security** (function, line 46) — Run security audit only.
 - **install_hook** (function, line 69) — Install git pre-commit hook to auto-update .claude/docs/ on each commit.
-- **watch** (function, line 90) — Watch for file changes and auto-update context.
-- **init** (function, line 117) — Generate CLAUDE.md for your project.
-- **setup** (function, line 137) — Interactive setup wizard — analyze project and configure Claude Code integration.
+- **freshness** (function, line 90) — Show how fresh the context is for each file.
+- **watch** (function, line 161) — Watch for file changes and auto-update context.
+- **init** (function, line 188) — Generate CLAUDE.md for your project.
 
 ## Related Files
-- `.claude/docs/cortex/core.py.md` [co-change: 100%]
-- `cortex/core.py` [co-change: 100%]
-- `cortex/generators/markdown_gen.py` [co-change: 100%]
-- `cortex/security/secrets_scanner.py` [co-change: 100%]
 - `.claude/docs/cortex/__init__.py.md` [co-change: 100%]
+- `.claude/docs/cortex/analyzers/__init__.py.md` [co-change: 100%]
+- `.claude/docs/cortex/analyzers/base.py.md` [co-change: 100%]
+- `.claude/docs/cortex/analyzers/dart_analyzer.py.md` [co-change: 100%]
+- `.claude/docs/cortex/analyzers/go_analyzer.py.md` [co-change: 100%]
 
 ## Security Notes
 - ✅ No issues found
