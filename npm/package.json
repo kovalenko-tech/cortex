@@ -1,0 +1,13 @@
+{
+  "name": "cortex-ai",
+  "version": "0.1.0",
+  "description": "Project knowledge base for Claude Code",
+  "bin": { "cortex": "./bin/cortex.js", "cortex-ai": "./bin/cortex.js" },
+  "scripts": { "postinstall": "node bin/install.js" },
+  "keywords": ["claude", "claude-code", "ai", "context", "codebase"],
+  "author": "Kyrylo Kovalenko",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/kovalenko-tech/cortex" },
+  "homepage": "https://kovalenko-tech.github.io/cortex/",
+  "engines": { "node": ">=16" }
+}

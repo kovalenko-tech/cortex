@@ -8,6 +8,12 @@ Project knowledge base for Claude Code. Analyzes git history, code structure, an
 curl -fsSL https://raw.githubusercontent.com/kovalenko-tech/cortex/main/install.sh | bash
 ```
 
+Or with npx (no install required, needs Python 3.11+):
+
+```bash
+npx cortex-ai analyze
+```
+
 ## Quick start
 
 ```bash
