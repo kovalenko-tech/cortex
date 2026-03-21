@@ -9,7 +9,7 @@ console = Console()
 @click.group()
 @click.version_option()
 def cli():
-    """CodePrep — generates .claude/docs/ context for Claude Code."""
+    """Cortex — generates .claude/docs/ context for Claude Code."""
     pass
 
 
@@ -19,8 +19,8 @@ def cli():
 @click.option("--lang", multiple=True, help="Filter languages: python, js, ts, dart, go")
 def analyze(repo, since, lang):
     """Analyze repository and generate .claude/docs/ context."""
-    from .core import CodePrep
-    CodePrep().analyze(repo_path=repo, since=since, languages=list(lang) or None)
+    from .core import Cortex
+    Cortex().analyze(repo_path=repo, since=since, languages=list(lang) or None)
 
 
 @cli.command()
@@ -32,7 +32,7 @@ def context(file_path):
     if doc.exists():
         console.print(doc.read_text())
     else:
-        console.print(f"[yellow]No context for {file_path}. Run: codeprep analyze[/]")
+        console.print(f"[yellow]No context for {file_path}. Run: cortex analyze[/]")
 
 
 @cli.command()
@@ -65,10 +65,10 @@ def install_hook(repo):
     import stat
     hook_path = Path(repo) / ".git" / "hooks" / "pre-commit"
     hook_content = """#!/bin/bash
-# CodePrep: update context for staged files
+# Cortex: update context for staged files
 STAGED=$(git diff --cached --name-only --diff-filter=ACM)
 if [ -n "$STAGED" ]; then
-    codeprep analyze --since HEAD 2>/dev/null || true
+    cortex analyze --since HEAD 2>/dev/null || true
     git add .claude/docs/ 2>/dev/null || true
 fi
 """
@@ -94,8 +94,8 @@ def watch(repo, interval):
             if current_hash != last_hash:
                 if last_hash:
                     console.print(f"[dim]New commit detected, updating...[/]")
-                    from .core import CodePrep
-                    CodePrep().analyze(repo_path=repo, since=f"{last_hash[:8]}..HEAD")
+                    from .core import Cortex
+                    Cortex().analyze(repo_path=repo, since=f"{last_hash[:8]}..HEAD")
                 last_hash = current_hash
             time.sleep(interval)
         except KeyboardInterrupt:

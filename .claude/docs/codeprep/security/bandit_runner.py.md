@@ -1,4 +1,4 @@
-# codeprep/security/bandit_runner.py
+# cortex/security/bandit_runner.py
 
 ## Overview
 Language: python | Constructs: 3
@@ -12,9 +12,9 @@ Key imports: json, subprocess, shutil, dataclasses, bandit
 ## Related Files
 - `.claude/docs/SECURITY_REPORT.md` [co-change: 100%]
 - `.claude/docs/SUMMARY.md` [co-change: 100%]
-- `.claude/docs/codeprep/__init__.py.md` [co-change: 100%]
-- `.claude/docs/codeprep/analyzers/__init__.py.md` [co-change: 100%]
-- `.claude/docs/codeprep/analyzers/base.py.md` [co-change: 100%]
+- `.claude/docs/cortex/__init__.py.md` [co-change: 100%]
+- `.claude/docs/cortex/analyzers/__init__.py.md` [co-change: 100%]
+- `.claude/docs/cortex/analyzers/base.py.md` [co-change: 100%]
 
 ## Security Notes
 - ✅ No issues found

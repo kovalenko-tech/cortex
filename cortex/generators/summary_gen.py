@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 def write_summary(repo_root: str, file_results: list[dict]) -> None:
-    lines = ["# Project Summary — CodePrep Analysis", ""]
+    lines = ["# Project Summary — Cortex Analysis", ""]
     lines.append(f"**Files analyzed:** {len(file_results)}")
 
     by_lang: dict[str, int] = {}
@@ -30,7 +30,7 @@ def write_summary(repo_root: str, file_results: list[dict]) -> None:
 
 
 def write_security_report(repo_root: str, security_items: list[dict]) -> None:
-    lines = ["# Security Report — CodePrep", ""]
+    lines = ["# Security Report — Cortex", ""]
 
     if not security_items:
         lines.append("✅ No security issues found.")

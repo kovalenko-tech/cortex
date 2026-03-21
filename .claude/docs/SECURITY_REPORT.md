@@ -1,3 +1,3 @@
-# Security Report — CodePrep
+# Security Report — Cortex
 
 ✅ No security issues found.

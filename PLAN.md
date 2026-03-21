@@ -1,4 +1,4 @@
-# CodePrep — Project Knowledge Base Generator for Claude Code
+# Cortex — Project Knowledge Base Generator for Claude Code
 
 > runs locally, free, supports Python / TypeScript / Dart / Go.  
 > Generates `.claude/docs/` context files used by Claude Code on every session.
@@ -178,19 +178,19 @@ Authentication module. Handles login, token validation, session management.
 
 ```bash
 # Analyze current repository
-codeprep analyze
+cortex analyze
 
 # Analyze a specific repo
-codeprep analyze --repo /path/to/project
+cortex analyze --repo /path/to/project
 
 # Security audit only
-codeprep security
+cortex security
 
 # Incremental update (only changed files)
-codeprep update --since HEAD~10
+cortex update --since HEAD~10
 
 # Get context for a specific file (used by Claude Code)
-codeprep context src/auth.py
+cortex context src/auth.py
 ```
 
 ---
@@ -220,7 +220,7 @@ doc = pathlib.Path(f".claude/docs/{file}.md")
 if doc.exists():
     print(doc.read_text())
 else:
-    print(f"No context for {file}. Run: codeprep analyze")
+    print(f"No context for {file}. Run: cortex analyze")
 ```
 
 ---
@@ -237,7 +237,7 @@ else:
 | Security — Universal | `semgrep` |
 | Secret scanning | `gitleaks` |
 | Output format | Markdown |
-| Config | `.codeprep.yml` |
+| Config | `.cortex.yml` |
 
 ---
 
@@ -247,7 +247,7 @@ else:
 - [x] Git history mining (bug fix commits + co-change matrix)
 - [x] Python AST analysis
 - [x] Markdown file generation
-- [x] CLI: `codeprep analyze`
+- [x] CLI: `cortex analyze`
 
 ### v0.2 — Multi-language
 - [x] TypeScript / JavaScript support
@@ -258,11 +258,11 @@ else:
 ### v0.3 — Intelligence
 - [x] Incremental updates (changed files only)
 - [x] LLM-enhanced summaries via Claude Haiku
-- [x] `codeprep watch` (auto-update on new commits)
+- [x] `cortex watch` (auto-update on new commits)
 
 ### v0.4 — Integrations
 - [x] GitHub Action
-- [x] Pre-commit hook (`codeprep install-hook`)
+- [x] Pre-commit hook (`cortex install-hook`)
 - [ ] VS Code extension (shows context when file is opened) — future
 
 ---

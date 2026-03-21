@@ -1,11 +1,11 @@
-# codeprep/cli.py
+# cortex/cli.py
 
 ## Overview
 Language: python | Constructs: 6
 Key imports: click, pathlib, rich.console, core, pathlib
 
 ## Key Constructs
-- **cli** (function, line 11) — CodePrep — generates .claude/docs/ context for Claude Code.
+- **cli** (function, line 11) — Cortex — generates .claude/docs/ context for Claude Code.
 - **analyze** (function, line 20) — Analyze repository and generate .claude/docs/ context.
 - **context** (function, line 28) — Print context for a specific file.
 - **security** (function, line 40) — Run security audit only.
@@ -15,9 +15,9 @@ Key imports: click, pathlib, rich.console, core, pathlib
 ## Related Files
 - `.claude/docs/SECURITY_REPORT.md` [co-change: 100%]
 - `.claude/docs/SUMMARY.md` [co-change: 100%]
-- `.claude/docs/codeprep/__init__.py.md` [co-change: 100%]
-- `.claude/docs/codeprep/analyzers/__init__.py.md` [co-change: 100%]
-- `.claude/docs/codeprep/analyzers/base.py.md` [co-change: 100%]
+- `.claude/docs/cortex/__init__.py.md` [co-change: 100%]
+- `.claude/docs/cortex/analyzers/__init__.py.md` [co-change: 100%]
+- `.claude/docs/cortex/analyzers/base.py.md` [co-change: 100%]
 
 ## Security Notes
 - ✅ No issues found

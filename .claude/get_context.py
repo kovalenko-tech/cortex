@@ -6,4 +6,4 @@ doc = pathlib.Path(f".claude/docs/{file}.md")
 if doc.exists():
     print(doc.read_text())
 else:
-    print(f"No context for {file}. Run: codeprep analyze")
+    print(f"No context for {file}. Run: cortex analyze")

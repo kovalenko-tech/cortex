@@ -1,4 +1,4 @@
-# Project Summary — CodePrep Analysis
+# Project Summary — Cortex Analysis
 
 **Files analyzed:** 20
 **Total constructs:** 41

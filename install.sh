@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-REPO="kovalenko-tech/codeprep"
-INSTALL_DIR="${HOME}/.codeprep"
+REPO="kovalenko-tech/cortex"
+INSTALL_DIR="${HOME}/.cortex"
 BIN_DIR="${HOME}/.local/bin"
 
 # Colors
@@ -13,7 +13,7 @@ BOLD='\033[1m'
 NC='\033[0m'
 
 echo ""
-echo -e "${BOLD}  CodePrep — Project Knowledge Base for Claude Code${NC}"
+echo -e "${BOLD}  Cortex — Project Knowledge Base for Claude Code${NC}"
 echo "  https://github.com/${REPO}"
 echo ""
 
@@ -43,20 +43,20 @@ fi
 
 # Download
 echo ""
-echo -e "  ${BLUE}→${NC} Downloading codeprep..."
+echo -e "  ${BLUE}→${NC} Downloading cortex..."
 
 mkdir -p "${INSTALL_DIR}"
 
 if command -v curl &>/dev/null; then
-  curl -fsSL "https://raw.githubusercontent.com/${REPO}/main/codeprep/cli.py" \
+  curl -fsSL "https://raw.githubusercontent.com/${REPO}/main/cortex/cli.py" \
     -o "${INSTALL_DIR}/cli.py"
-  curl -fsSL "https://raw.githubusercontent.com/${REPO}/main/codeprep/__init__.py" \
+  curl -fsSL "https://raw.githubusercontent.com/${REPO}/main/cortex/__init__.py" \
     -o "${INSTALL_DIR}/__init__.py"
 elif command -v wget &>/dev/null; then
   wget -qO "${INSTALL_DIR}/cli.py" \
-    "https://raw.githubusercontent.com/${REPO}/main/codeprep/cli.py"
+    "https://raw.githubusercontent.com/${REPO}/main/cortex/cli.py"
   wget -qO "${INSTALL_DIR}/__init__.py" \
-    "https://raw.githubusercontent.com/${REPO}/main/codeprep/__init__.py"
+    "https://raw.githubusercontent.com/${REPO}/main/cortex/__init__.py"
 else
   echo -e "${RED}Error: curl or wget is required.${NC}"
   exit 1
@@ -69,11 +69,11 @@ python3 -m pip install --quiet --upgrade gitpython click rich 2>/dev/null || \
 
 # Create wrapper script
 mkdir -p "${BIN_DIR}"
-cat > "${BIN_DIR}/codeprep" << WRAPPER
+cat > "${BIN_DIR}/cortex" << WRAPPER
 #!/bin/bash
 exec python3 "${INSTALL_DIR}/cli.py" "\$@"
 WRAPPER
-chmod +x "${BIN_DIR}/codeprep"
+chmod +x "${BIN_DIR}/cortex"
 
 # Add to PATH if needed
 SHELL_RC=""
@@ -90,18 +90,18 @@ fi
 export PATH="${BIN_DIR}:${PATH}"
 
 echo ""
-echo -e "  ${GREEN}✓${NC} codeprep installed successfully!"
+echo -e "  ${GREEN}✓${NC} cortex installed successfully!"
 echo ""
 echo -e "  ${BOLD}Usage:${NC}"
-echo "    codeprep analyze          # analyze current project"
-echo "    codeprep context <file>   # get context for a file"
-echo "    codeprep security         # security audit only"
+echo "    cortex analyze          # analyze current project"
+echo "    cortex context <file>   # get context for a file"
+echo "    cortex security         # security audit only"
 echo ""
 echo -e "  ${BOLD}Quick start:${NC}"
 echo "    cd your-project"
-echo "    codeprep analyze"
+echo "    cortex analyze"
 echo ""
-if ! command -v codeprep &>/dev/null; then
+if ! command -v cortex &>/dev/null; then
   echo -e "  ${BLUE}Note:${NC} Restart your shell or run: export PATH=\"\$HOME/.local/bin:\$PATH\""
   echo ""
 fi

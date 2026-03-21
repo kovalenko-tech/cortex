@@ -1,4 +1,4 @@
-# codeprep/generators/llm_summary.py
+# cortex/generators/llm_summary.py
 
 ## Overview
 Language: python | Constructs: 1

@@ -72,11 +72,11 @@ def discover_files(repo_root: str, languages: list[str] | None = None) -> list[s
     return files
 
 
-class CodePrep:
+class Cortex:
     def analyze(self, repo_path: str = '.', since: str | None = None,
                 languages: list[str] | None = None) -> None:
         repo_root = os.path.abspath(repo_path)
-        console.print(f"\n[bold blue]CodePrep[/] analyzing [cyan]{repo_root}[/]\n")
+        console.print(f"\n[bold blue]Cortex[/] analyzing [cyan]{repo_root}[/]\n")
 
         files = discover_files(repo_root, languages)
         if not files:
@@ -184,5 +184,5 @@ class CodePrep:
             'if doc.exists():\n'
             '    print(doc.read_text())\n'
             'else:\n'
-            '    print(f"No context for {file}. Run: codeprep analyze")\n'
+            '    print(f"No context for {file}. Run: cortex analyze")\n'
         )
