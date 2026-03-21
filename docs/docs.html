@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cortex Documentation</title>
+  <meta name="description" content="Cortex CLI documentation — all commands, flags, configuration and GitHub integration.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --text: #ffffff;
+      --text-dim: #888;
+      --accent: #6366f1;
+      --border: rgba(255,255,255,0.08);
+      --card: #111;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.7; }
+
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 60px; background: rgba(10,10,10,0.9); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+    .nav-logo { font-weight: 700; font-size: 18px; color: var(--text); text-decoration: none; }
+    .nav-logo span { color: var(--accent); }
+    .nav-links { display: flex; gap: 24px; align-items: center; }
+    .nav-links a { color: var(--text-dim); text-decoration: none; font-size: 14px; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-btn { background: var(--accent); color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 500; }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+
+    main { padding-top: 100px; padding-bottom: 80px; }
+
+    h1 { font-size: 36px; font-weight: 700; margin-bottom: 8px; }
+    h2 { font-size: 22px; font-weight: 600; margin: 48px 0 16px; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    h3 { font-size: 16px; font-weight: 600; margin: 24px 0 8px; color: var(--accent); }
+    p { color: var(--text-dim); margin-bottom: 16px; }
+
+    code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; color: #a5f3fc; }
+
+    pre { background: #111; border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin: 16px 0; overflow-x: auto; }
+    pre code { background: none; padding: 0; color: #e2e8f0; font-size: 13px; }
+
+    .cmd-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    .cmd-table th { text-align: left; padding: 10px 16px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); border-bottom: 1px solid var(--border); }
+    .cmd-table td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 14px; }
+    .cmd-table td:first-child { font-family: 'SF Mono', monospace; font-size: 12px; color: #a5f3fc; white-space: nowrap; }
+    .cmd-table td:last-child { color: var(--text-dim); }
+    .cmd-table tr:last-child td { border-bottom: none; }
+
+    .section-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 16px 0; }
+
+    a { color: var(--accent); }
+    a:hover { color: #818cf8; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="nav-logo">cortex<span>.</span></a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="https://github.com/kovalenko-tech/cortex" target="_blank" class="nav-btn">GitHub</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="container">
+      <h1>Documentation</h1>
+      <p>Complete reference for Cortex CLI — all commands, flags, and configuration.</p>
+
+      <h2>Installation</h2>
+      <pre><code>curl -fsSL https://raw.githubusercontent.com/kovalenko-tech/cortex/main/install.sh | bash</code></pre>
+      <p>Or with npx (requires Python 3.11+):</p>
+      <pre><code>npx cortex-ai analyze</code></pre>
+
+      <h2>Commands</h2>
+
+      <h3>Setup &amp; Analysis</h3>
+      <table class="cmd-table">
+        <thead><tr><th>Command</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>cortex setup</td><td>Interactive wizard — analyze, configure MCP, install git hook</td></tr>
+          <tr><td>cortex analyze</td><td>Analyze full project and generate .claude/docs/</td></tr>
+          <tr><td>cortex init</td><td>Generate CLAUDE.md with project overview and commands</td></tr>
+          <tr><td>cortex mine-prs</td><td>Mine GitHub PR comments for implicit architectural decisions</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Query &amp; Inspect</h3>
+      <table class="cmd-table">
+        <thead><tr><th>Command</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>cortex context &lt;file&gt;</td><td>Show context for a specific file</td></tr>
+          <tr><td>cortex status</td><td>Show analysis status, freshness summary, risk overview</td></tr>
+          <tr><td>cortex risks</td><td>List files by risk score (HIGH / MEDIUM / LOW)</td></tr>
+          <tr><td>cortex freshness</td><td>Show how stale the context is per file</td></tr>
+          <tr><td>cortex security</td><td>Run security audit across all files</td></tr>
+          <tr><td>cortex deps</td><td>Scan dependencies for known vulnerabilities</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Maintenance</h3>
+      <table class="cmd-table">
+        <thead><tr><th>Command</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>cortex diff &lt;branch&gt;</td><td>Update context only for files changed vs branch</td></tr>
+          <tr><td>cortex install-hook</td><td>Install git pre-commit hook for auto-updates</td></tr>
+          <tr><td>cortex watch</td><td>Watch for commits and auto-update context</td></tr>
+          <tr><td>cortex clean</td><td>Remove all generated context files and cache</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Integration</h3>
+      <table class="cmd-table">
+        <thead><tr><th>Command</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>cortex mcp</td><td>Start MCP server for Claude Code integration</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Flags</h2>
+      <table class="cmd-table">
+        <thead><tr><th>Flag</th><th>Command</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>--since &lt;ref&gt;</td><td>analyze</td><td>Only analyze files changed since git ref (e.g. HEAD~10, main)</td></tr>
+          <tr><td>--no-llm</td><td>analyze</td><td>Skip AI summaries — faster, no API key needed</td></tr>
+          <tr><td>--no-cache</td><td>analyze</td><td>Force full re-analysis ignoring file cache</td></tr>
+          <tr><td>--max-files N</td><td>analyze</td><td>Limit number of files analyzed</td></tr>
+          <tr><td>--lang</td><td>analyze</td><td>Filter by language: python, js, ts, dart, go</td></tr>
+          <tr><td>--force</td><td>init</td><td>Overwrite existing CLAUDE.md</td></tr>
+          <tr><td>--token</td><td>mine-prs</td><td>GitHub token (or set GITHUB_TOKEN env var)</td></tr>
+          <tr><td>--max-prs N</td><td>mine-prs</td><td>Max number of PRs to analyze (default: 50)</td></tr>
+          <tr><td>--level</td><td>risks</td><td>Filter by risk level: HIGH, MEDIUM, LOW, all</td></tr>
+          <tr><td>--stale-only</td><td>freshness</td><td>Show only stale and outdated files</td></tr>
+        </tbody>
+      </table>
+
+      <h2>MCP Integration</h2>
+      <p>Add to <code>.claude/settings.json</code> in your project:</p>
+      <pre><code>{
+  "mcpServers": {
+    "cortex": {
+      "command": "cortex",
+      "args": ["mcp"]
+    }
+  }
+}</code></pre>
+      <p>Restart Claude Code. Context is now injected automatically when you open any file.</p>
+
+      <h2>GitHub PR Knowledge</h2>
+      <pre><code>export GITHUB_TOKEN=ghp_...
+cortex mine-prs
+cortex analyze</code></pre>
+      <p>Cortex mines merged PRs for inline review comments and discussion, extracting architectural decisions, warnings, and reasoning. Results appear in the <code>## Decisions &amp; Context</code> section of each file's context.</p>
+
+      <h2>AI Summaries</h2>
+      <pre><code>export ANTHROPIC_API_KEY=sk-ant-...
+cortex analyze</code></pre>
+      <p>Uses Claude Haiku to generate a 2–3 sentence technical overview per file. Optional — all other features work without an API key.</p>
+
+      <h2>GitHub Action</h2>
+      <p>Auto-update context on every push. See <a href="https://github.com/kovalenko-tech/cortex/blob/main/.github/workflows/cortex.yml">cortex.yml example</a>.</p>
+
+      <h2>Supported Languages</h2>
+      <table class="cmd-table">
+        <thead><tr><th>Language</th><th>AST Analysis</th><th>Security</th></tr></thead>
+        <tbody>
+          <tr><td>Python</td><td>✅ stdlib ast</td><td>✅ bandit</td></tr>
+          <tr><td>TypeScript / JS</td><td>✅ regex parser</td><td>✅ semgrep</td></tr>
+          <tr><td>Dart / Flutter</td><td>✅ regex parser</td><td>✅ semgrep</td></tr>
+          <tr><td>Go</td><td>✅ regex parser</td><td>✅ semgrep</td></tr>
+        </tbody>
+      </table>
+
+      <h2>.cortexignore</h2>
+      <p>Exclude files from analysis (same syntax as .gitignore):</p>
+      <pre><code># .cortexignore
+migrations/
+*.generated.ts
+data/
+vendor/</code></pre>
+
+    </div>
+  </main>
+</body>
+</html>
