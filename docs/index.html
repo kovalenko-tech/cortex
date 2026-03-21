@@ -785,7 +785,7 @@
       <h1 class="fade-up fade-up-delay-1">Give Claude Code full<br>knowledge of your project</h1>
 
       <p class="hero-subtitle fade-up fade-up-delay-2">
-        Cortex analyzes git history, code structure, and security — generating context files your coding agent reads automatically.
+        Cortex analyzes your git history, code structure, security and dependencies — giving Claude Code full project knowledge from day one.
       </p>
 
       <div class="install-block fade-up fade-up-delay-3" id="install-block">
@@ -884,6 +884,16 @@
           <h3>AI summaries</h3>
           <p>Optional Claude Haiku-powered overview per file. Explains purpose, patterns, and gotchas in plain language — accelerating cold starts.</p>
         </div>
+        <div class="feature-card fade-up fade-up-delay-1">
+          <span class="feature-icon">📦</span>
+          <h3>Dependency Scan</h3>
+          <p>Checks Python, Node.js and Flutter dependencies for known vulnerabilities. Results go straight into <code>.claude/docs/</code>.</p>
+        </div>
+        <div class="feature-card fade-up fade-up-delay-2">
+          <span class="feature-icon">🔌</span>
+          <h3>MCP Server</h3>
+          <p>Native Claude Code integration via Model Context Protocol. Context is injected automatically — no manual file reading.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -928,13 +938,43 @@
     </div>
   </section>
 
+  <!-- MCP INTEGRATION -->
+  <section id="mcp">
+    <div class="container">
+      <div class="fade-up" style="text-align:center; margin-bottom: 48px;">
+        <p class="section-label">Native integration</p>
+        <h2 class="section-title">Native Claude Code Integration</h2>
+        <p class="section-subtitle" style="margin: 0 auto;">Add cortex as an MCP server — Claude Code gets context automatically for every file you open.</p>
+      </div>
+
+      <div class="terminal-window fade-up fade-up-delay-1" style="max-width: 640px; margin: 0 auto;">
+        <div class="terminal-header">
+          <div class="terminal-dot red"></div>
+          <div class="terminal-dot yellow"></div>
+          <div class="terminal-dot green"></div>
+          <span class="terminal-title">.claude/settings.json</span>
+        </div>
+        <div class="terminal-body">
+          <div class="t-text">{</div>
+          <div class="t-text">&nbsp;&nbsp;<span class="t-h2">"mcpServers"</span>: {</div>
+          <div class="t-text">&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-h2">"cortex"</span>: {</div>
+          <div class="t-text">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-h2">"command"</span>: <span class="t-accent">"cortex"</span>,</div>
+          <div class="t-text">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-h2">"args"</span>: [<span class="t-accent">"mcp"</span>]</div>
+          <div class="t-text">&nbsp;&nbsp;&nbsp;&nbsp;}</div>
+          <div class="t-text">&nbsp;&nbsp;}</div>
+          <div class="t-text">}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- COMMANDS -->
   <section id="commands">
     <div class="container">
       <div class="fade-up">
         <p class="section-label">CLI reference</p>
         <h2 class="section-title">All commands</h2>
-        <p class="section-subtitle">Cortex stays out of your way. Five commands cover everything.</p>
+        <p class="section-subtitle">Every tool you need, nothing you don't.</p>
       </div>
 
       <div class="commands-table fade-up fade-up-delay-1">
@@ -944,23 +984,43 @@
         </div>
         <div class="command-row">
           <div class="command-code">cortex analyze</div>
-          <div class="command-desc">Analyze full project — git, structure, security</div>
+          <div class="command-desc">analyze full project</div>
         </div>
         <div class="command-row">
           <div class="command-code">cortex analyze --since HEAD~20</div>
-          <div class="command-desc">Only re-analyze recently changed files</div>
+          <div class="command-desc">only changed files</div>
         </div>
         <div class="command-row">
-          <div class="command-code">cortex context src/auth.py</div>
-          <div class="command-desc">Show rich context for a single file</div>
+          <div class="command-code">cortex init</div>
+          <div class="command-desc">generate CLAUDE.md</div>
+        </div>
+        <div class="command-row">
+          <div class="command-code">cortex context &lt;file&gt;</div>
+          <div class="command-desc">show context for one file</div>
         </div>
         <div class="command-row">
           <div class="command-code">cortex security</div>
-          <div class="command-desc">Run security audit only — SAST + secret scan</div>
+          <div class="command-desc">security audit only</div>
+        </div>
+        <div class="command-row">
+          <div class="command-code">cortex deps</div>
+          <div class="command-desc">scan dependencies for vulnerabilities</div>
+        </div>
+        <div class="command-row">
+          <div class="command-code">cortex diff &lt;branch&gt;</div>
+          <div class="command-desc">update context for changed files vs branch</div>
         </div>
         <div class="command-row">
           <div class="command-code">cortex install-hook</div>
-          <div class="command-desc">Auto-update context on every git commit</div>
+          <div class="command-desc">auto-update on every commit</div>
+        </div>
+        <div class="command-row">
+          <div class="command-code">cortex watch</div>
+          <div class="command-desc">auto-update when commits arrive</div>
+        </div>
+        <div class="command-row">
+          <div class="command-code">cortex mcp</div>
+          <div class="command-desc">start MCP server for Claude Code</div>
         </div>
       </div>
     </div>
