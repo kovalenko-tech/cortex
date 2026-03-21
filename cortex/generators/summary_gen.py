@@ -56,6 +56,23 @@ def write_summary(repo_root: str, file_results: list[dict]) -> None:
         lines.append(diagram)
         lines.append("")
 
+    # Risk Overview
+    high_risk_files = [r for r in file_results if r.get('risk_level') == 'HIGH']
+    medium_risk_files = [r for r in file_results if r.get('risk_level') == 'MEDIUM']
+    low_risk_count = len(file_results) - len(high_risk_files) - len(medium_risk_files)
+
+    lines.append("## Risk Overview")
+    lines.append(f"- 🔴 High risk: {len(high_risk_files)} files")
+    lines.append(f"- 🟡 Medium risk: {len(medium_risk_files)} files")
+    lines.append(f"- 🟢 Low risk: {low_risk_count} files")
+    lines.append("")
+    if high_risk_files:
+        lines.append("### High-Risk Files")
+        for r in sorted(high_risk_files, key=lambda x: x.get('risk_score', 0), reverse=True)[:10]:
+            reasons = ' · '.join(r.get('risk_reasons', [])[:2])
+            lines.append(f"- 🔴 `{r['file']}` — {reasons}")
+        lines.append("")
+
     # Files with no test coverage
     uncovered = [r for r in file_results if not r.get('has_tests', False)]
     if uncovered:

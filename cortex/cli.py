@@ -86,6 +86,92 @@ fi
 
 @cli.command()
 @click.option("--repo", default=".", show_default=True)
+@click.option("--level", type=click.Choice(['HIGH', 'MEDIUM', 'LOW', 'all']), default='all')
+def risks(repo, level):
+    """Show risk scores for all analyzed files."""
+    import os
+    import json
+    from pathlib import Path
+    from .risk import compute_risk_score, get_change_count
+
+    repo_root = os.path.abspath(repo)
+    cache_path = Path(repo_root) / '.cortex-cache.json'
+
+    if not cache_path.exists():
+        console.print("[yellow]No cache found.[/] Run: cortex analyze first.")
+        return
+
+    cache = json.loads(cache_path.read_text())
+    files = [k for k in cache.keys() if not k.startswith('_')]
+
+    if not files:
+        console.print("[yellow]No files in cache.[/]")
+        return
+
+    console.print(f"\n[bold]Risk Analysis[/] — {repo_root}\n")
+
+    results = []
+    for rel_path in files:
+        abs_path = os.path.join(repo_root, rel_path)
+        if not os.path.exists(abs_path):
+            continue
+
+        # Get data from cache (supports both old hash-string format and new dict format)
+        file_cache = cache.get(rel_path, {})
+        if isinstance(file_cache, dict):
+            bug_fix_count = file_cache.get('bug_fix_count', 0)
+            change_count = file_cache.get('change_count', 0) or get_change_count(repo_root, rel_path)
+            has_tests = file_cache.get('has_tests', False)
+            security_count = file_cache.get('security_count', 0)
+        else:
+            bug_fix_count = 0
+            change_count = get_change_count(repo_root, rel_path)
+            has_tests = False
+            security_count = 0
+
+        risk = compute_risk_score(
+            file=rel_path,
+            bug_fix_count=bug_fix_count,
+            change_count=change_count,
+            has_tests=has_tests,
+            security_issues=security_count,
+            dependents_count=0,
+            cochange_count=0,
+        )
+        results.append(risk)
+
+    # Filter
+    if level != 'all':
+        results = [r for r in results if r.level == level]
+
+    # Sort by score desc
+    results.sort(key=lambda x: x.score, reverse=True)
+
+    # Summary counts (always from full results for display)
+    all_results = results if level == 'all' else results
+    high = sum(1 for r in results if r.level == 'HIGH')
+    medium = sum(1 for r in results if r.level == 'MEDIUM')
+    low = sum(1 for r in results if r.level == 'LOW')
+    console.print(f"  🔴 High risk:   [red]{high}[/]")
+    console.print(f"  🟡 Medium risk: [yellow]{medium}[/]")
+    console.print(f"  🟢 Low risk:    [green]{low}[/]")
+    console.print()
+
+    # Show high/medium risk files
+    show = [r for r in results if r.level in ('HIGH', 'MEDIUM')][:20]
+    if show:
+        console.print("[bold]Files requiring attention:[/]")
+        for r in show:
+            reasons = ' · '.join(r.reasons[:2])
+            console.print(f"  {r.icon} [cyan]{r.file}[/] [dim](score: {r.score}) {reasons}[/]")
+        console.print()
+    else:
+        console.print("[green]No high-risk files found.[/]")
+    console.print()
+
+
+@cli.command()
+@click.option("--repo", default=".", show_default=True)
 @click.option("--stale-only", is_flag=True, help="Show only stale/outdated files")
 def freshness(repo, stale_only):
     """Show how fresh the context is for each file."""
@@ -377,6 +463,14 @@ def status(repo):
             elif info.score == 'OUTDATED':
                 outdated += 1
         console.print(f"  Freshness:     ⚡{fresh} fresh  ⚠️{stale} stale  ❌{outdated} outdated")
+
+    # Risk summary from cache
+    high_risk = sum(
+        1 for k, v in cache_data.items()
+        if not k.startswith('_') and isinstance(v, dict) and v.get('risk_level') == 'HIGH'
+    )
+    if high_risk > 0:
+        console.print(f"  High-risk files: [red]{high_risk}[/] — run [cyan]cortex risks[/]")
 
     console.print()
 

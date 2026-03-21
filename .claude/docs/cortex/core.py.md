@@ -1,6 +1,8 @@
 # cortex/core.py
 
-> ⚡ **Fresh** — analyzed 2026-03-21 21:50 UTC
+> ⚡ **Fresh** — analyzed 2026-03-21 21:55 UTC
+
+> 🟡 **MEDIUM RISK** (score: 35/100) — 2 bug fixes in history · no test coverage
 
 ## Overview
 Language: python | Constructs: 10
@@ -24,14 +26,14 @@ Supports:
 - **discover_files** (function, line 86) — Find all analyzable source files in repo.
 - **Cortex** (class, line 136)
 - **_analyze_file** (function, line 137) — Analyze a single file — runs in thread pool.
-- **_print_completion** (function, line 187)
+- **_print_completion** (function, line 215)
 
 ## Related Files
 - `.claude/docs/cortex/__init__.py.md` [co-change: 100%]
+- `.claude/docs/cortex/__main__.py.md` [co-change: 100%]
 - `.claude/docs/cortex/analyzers/__init__.py.md` [co-change: 100%]
 - `.claude/docs/cortex/analyzers/base.py.md` [co-change: 100%]
 - `.claude/docs/cortex/analyzers/dart_analyzer.py.md` [co-change: 100%]
-- `.claude/docs/cortex/analyzers/go_analyzer.py.md` [co-change: 100%]
 
 ## Security Notes
 - ✅ No issues found

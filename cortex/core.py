@@ -136,6 +136,8 @@ def discover_files(repo_root: str, languages: list[str] | None = None) -> list[s
 class Cortex:
     def _analyze_file(self, filepath, repo_root, cochange_map, no_llm=False):
         """Analyze a single file — runs in thread pool."""
+        from . import risk as risk_module
+
         rel = os.path.relpath(filepath, repo_root)
 
         analyzer = next((a for a in ANALYZERS if a.can_analyze(filepath)), None)
@@ -163,12 +165,32 @@ class Cortex:
         if analysis is None:
             analysis = FileAnalysis(language="unknown")
 
+        # Compute change count and bug fix count
+        change_count = risk_module.get_change_count(repo_root, rel)
+        bug_fix_count = len([i for i in insights if i.type == 'bug_fix'])
+        security_count = len(security_issues) + len(secret_findings)
+        has_tests = bool(analysis.test_files)
+
+        # Compute risk score (dependents_count=0 here; updated later in analyze())
+        risk = risk_module.compute_risk_score(
+            file=rel,
+            bug_fix_count=bug_fix_count,
+            change_count=change_count,
+            has_tests=has_tests,
+            security_issues=security_count,
+            dependents_count=0,
+            cochange_count=0,
+        )
+
         analyzed_at = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
         content = markdown_gen.generate(
             filepath, repo_root, insights, related,
             analysis, security_issues, secret_findings,
             no_llm=no_llm,
             analyzed_at=analyzed_at,
+            risk_level=risk.level,
+            risk_score=risk.score,
+            risk_reasons=risk.reasons,
         )
         markdown_gen.write_doc(content, filepath, repo_root)
 
@@ -176,8 +198,14 @@ class Cortex:
             'file': rel,
             'language': analysis.language,
             'constructs': len(analysis.constructs),
-            'security_count': len(security_issues) + len(secret_findings),
-            'has_tests': bool(analysis.test_files),
+            'security_count': security_count,
+            'has_tests': has_tests,
+            'change_count': change_count,
+            'bug_fix_count': bug_fix_count,
+            'risk_level': risk.level,
+            'risk_score': risk.score,
+            'risk_reasons': risk.reasons,
+            'risk_icon': risk.icon,
             'security_issues': [
                 {'file': rel, 'severity': i.severity, 'line': i.line, 'message': i.message}
                 for i in security_issues
@@ -278,7 +306,10 @@ class Cortex:
         for f in files:
             rel = os.path.relpath(f, repo_root)
             h = file_hash(f)
-            if not no_cache and cache.get(rel) == h:
+            cached = cache.get(rel)
+            # cached may be a plain hash string (old format) or a dict (new format)
+            cached_hash = cached if isinstance(cached, str) else (cached.get('_hash', '') if isinstance(cached, dict) else '')
+            if not no_cache and cached_hash == h:
                 skipped += 1
             else:
                 files_to_analyze.append((f, rel, h))
@@ -319,12 +350,50 @@ class Cortex:
                         result = future.result()
                         file_results.append(result)
                         security_items.extend(result.pop('security_issues', []))
-                        # Update cache entry on success
+                        # Store hash temporarily; full dict written after risk recompute
                         cache[rel] = h
                     except Exception:
                         pass  # skip failed files silently
 
-        # Save cache
+        # Recompute risk with dependents map (full picture after all files analyzed)
+        from .risk import build_dependents_map, compute_risk_score as _compute_risk
+        abs_files = [os.path.join(repo_root, r['file']) for r in file_results]
+        dependents_map = build_dependents_map(repo_root, abs_files)
+        for result in file_results:
+            abs_path = os.path.join(repo_root, result['file'])
+            dependents = dependents_map.get(abs_path, 0)
+            if dependents > 0:
+                # Recompute with actual dependents count
+                risk = _compute_risk(
+                    file=result['file'],
+                    bug_fix_count=result.get('bug_fix_count', 0),
+                    change_count=result.get('change_count', 0),
+                    has_tests=result.get('has_tests', False),
+                    security_issues=result.get('security_count', 0),
+                    dependents_count=dependents,
+                    cochange_count=0,
+                )
+                result['risk_level'] = risk.level
+                result['risk_score'] = risk.score
+                result['risk_reasons'] = risk.reasons
+                result['risk_icon'] = risk.icon
+
+        # Save cache — include risk data per file
+        for result in file_results:
+            rel = result['file']
+            if rel in cache:
+                # cache[rel] is a hash string; upgrade to dict
+                cache[rel] = {
+                    '_hash': cache[rel] if isinstance(cache[rel], str) else cache.get(rel, {}).get('_hash', ''),
+                    'bug_fix_count': result.get('bug_fix_count', 0),
+                    'change_count': result.get('change_count', 0),
+                    'has_tests': result.get('has_tests', False),
+                    'security_count': result.get('security_count', 0),
+                    'risk_level': result.get('risk_level', 'LOW'),
+                    'risk_score': result.get('risk_score', 0),
+                    'risk_reasons': result.get('risk_reasons', []),
+                    'risk_icon': result.get('risk_icon', '🟢'),
+                }
         save_cache(repo_root, cache)
 
         # Write summary files

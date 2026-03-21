@@ -1,6 +1,8 @@
 # cortex/generators/claude_md_gen.py
 
-> ⚡ **Fresh** — analyzed 2026-03-21 21:50 UTC
+> ⚡ **Fresh** — analyzed 2026-03-21 21:55 UTC
+
+> 🟡 **MEDIUM RISK** (score: 25/100) — no test coverage
 
 ## Overview
 Language: python | Constructs: 4

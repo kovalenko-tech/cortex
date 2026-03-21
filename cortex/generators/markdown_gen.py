@@ -19,10 +19,20 @@ def generate(
     secret_findings: list,
     no_llm: bool = False,
     analyzed_at: str = "",
+    risk_level: str = "",
+    risk_score: int = 0,
+    risk_reasons: list = None,
 ) -> str:
     rel_path = os.path.relpath(filepath, repo_root)
     now_str = analyzed_at or datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
     lines = [f"# {rel_path}", "", f"> ⚡ **Fresh** — analyzed {now_str}", ""]
+
+    # Risk badge
+    if risk_level:
+        icon = '🔴' if risk_level == 'HIGH' else '🟡' if risk_level == 'MEDIUM' else '🟢'
+        reasons_str = ' · '.join(risk_reasons or [])
+        lines.append(f"> {icon} **{risk_level} RISK** (score: {risk_score}/100) — {reasons_str}")
+        lines.append("")
 
     # Overview
     lines.append("## Overview")
