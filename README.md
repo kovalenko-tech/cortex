@@ -75,6 +75,26 @@ cortex analyze
 
 Optional. Without it, all other features still work.
 
+## GitHub PR knowledge
+
+Mine implicit decisions from PR discussions:
+
+```bash
+export GITHUB_TOKEN=ghp_...
+cortex mine-prs
+cortex analyze  # context now includes PR decisions
+```
+
+Claude Code will see in each file's context:
+
+```
+## Decisions & Context
+- ✅ Chose Redis over Memcached because we need persistence across restarts
+  PR #234 — @john
+- 🚫 Don't cache this endpoint — caused stale data bugs in production
+  PR #198 — @maria
+```
+
 ## License
 
 MIT

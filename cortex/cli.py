@@ -535,5 +535,44 @@ def diff(branch, repo):
     Cortex().analyze(repo_path=repo_root, since=f"{branch}...HEAD")
 
 
+@cli.command('mine-prs')
+@click.option("--repo", default=".", show_default=True)
+@click.option("--token", default="", help="GitHub token (or set GITHUB_TOKEN env var)")
+@click.option("--max-prs", default=50, show_default=True, help="Max PRs to analyze")
+def mine_prs(repo, token, max_prs):
+    """Mine GitHub PRs for implicit decisions and architectural knowledge."""
+    import os
+    from .miners.github_prs import mine_pr_knowledge, save_pr_knowledge
+
+    repo_root = os.path.abspath(repo)
+
+    console.print(f"\n[dim]Mining PR knowledge from GitHub...[/]")
+
+    decisions = mine_pr_knowledge(repo_root, token=token, max_prs=max_prs)
+
+    if not decisions:
+        console.print("[yellow]No PR decisions found.[/]")
+        console.print("[dim]Make sure GITHUB_TOKEN is set and this repo has merged PRs with comments.[/]")
+        return
+
+    save_pr_knowledge(repo_root, decisions)
+
+    total = sum(len(v) for v in decisions.values())
+    console.print(f"[green]✓[/] Found [bold]{total}[/] decisions across [bold]{len(decisions)}[/] files")
+    console.print()
+
+    # Show sample
+    for filepath, file_decisions in list(decisions.items())[:5]:
+        console.print(f"  [cyan]{filepath}[/]")
+        for d in file_decisions[:2]:
+            icon = {'chose': '✅', 'warning': '⚠️', 'reason': '💡', 'dont': '🚫'}.get(d.decision_type, '📝')
+            console.print(f"    {icon} {d.text[:80]}...")
+        console.print()
+
+    console.print(f"[dim]Saved to .claude/pr-knowledge.json[/]")
+    console.print(f"[dim]Run cortex analyze to include in .claude/docs/ context files[/]")
+    console.print()
+
+
 if __name__ == "__main__":
     cli()

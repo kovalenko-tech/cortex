@@ -134,7 +134,7 @@ def discover_files(repo_root: str, languages: list[str] | None = None) -> list[s
 
 
 class Cortex:
-    def _analyze_file(self, filepath, repo_root, cochange_map, no_llm=False):
+    def _analyze_file(self, filepath, repo_root, cochange_map, no_llm=False, pr_knowledge=None):
         """Analyze a single file — runs in thread pool."""
         from . import risk as risk_module
 
@@ -183,6 +183,10 @@ class Cortex:
         )
 
         analyzed_at = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
+
+        # Get PR decisions for this file
+        file_pr_decisions = (pr_knowledge or {}).get(rel, [])
+
         content = markdown_gen.generate(
             filepath, repo_root, insights, related,
             analysis, security_issues, secret_findings,
@@ -191,6 +195,7 @@ class Cortex:
             risk_level=risk.level,
             risk_score=risk.score,
             risk_reasons=risk.reasons,
+            pr_decisions=file_pr_decisions,
         )
         markdown_gen.write_doc(content, filepath, repo_root)
 
@@ -317,6 +322,10 @@ class Cortex:
         if skipped:
             console.print(f"[dim]Cache: skipping {skipped} unchanged files[/]")
 
+        # Load PR knowledge (if available)
+        from .miners.github_prs import load_pr_knowledge
+        pr_knowledge = load_pr_knowledge(repo_root)
+
         # Build co-change map once
         console.print(f"[dim]Mining git history...[/]")
         try:
@@ -340,7 +349,7 @@ class Cortex:
 
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 futures = {
-                    executor.submit(self._analyze_file, f, repo_root, cochange_map, no_llm): (f, rel, h)
+                    executor.submit(self._analyze_file, f, repo_root, cochange_map, no_llm, pr_knowledge): (f, rel, h)
                     for f, rel, h in files_to_analyze
                 }
                 for future in as_completed(futures):

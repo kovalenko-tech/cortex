@@ -22,6 +22,7 @@ def generate(
     risk_level: str = "",
     risk_score: int = 0,
     risk_reasons: list = None,
+    pr_decisions: list = None,
 ) -> str:
     rel_path = os.path.relpath(filepath, repo_root)
     now_str = analyzed_at or datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
@@ -63,6 +64,18 @@ def generate(
             lines.append(f"- [{label}] {ins.date}: {ins.message}")
             if ins.diff_summary:
                 lines.append(f"  Change: {ins.diff_summary}")
+        lines.append("")
+
+    # PR Decisions
+    if pr_decisions:
+        lines.append("## Decisions & Context")
+        lines.append("*Extracted from PR discussions:*")
+        lines.append("")
+        for d in pr_decisions[:5]:
+            icon = {'chose': '✅', 'rejected': '❌', 'warning': '⚠️', 'reason': '💡', 'dont': '🚫'}.get(d.get('type', ''), '📝')
+            pr_ref = f"[PR #{d['pr']}]({d['url']})" if d.get('url') else f"PR #{d['pr']}"
+            lines.append(f"- {icon} {d['text']}")
+            lines.append(f"  *{pr_ref} — @{d['author']}*")
         lines.append("")
 
     # Edit Checklist
