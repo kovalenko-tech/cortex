@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cortex — Project knowledge base for Claude Code</title>
+  <meta name="description" content="Analyzes git history, code structure and security to give Claude Code full project context.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0a0a0a;
+      --bg-secondary: #111111;
+      --card: #1a1a2e;
+      --card-border: #2a2a4e;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --accent-dim: rgba(99, 102, 241, 0.15);
+      --text: #ffffff;
+      --text-secondary: #a1a1aa;
+      --text-dim: #71717a;
+      --code-bg: #0d0d1a;
+      --border: #1e1e2e;
+      --green: #22c55e;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 60px;
+      background: rgba(10, 10, 10, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-logo-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    .nav-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-link:hover {
+      color: var(--text);
+    }
+
+    /* ── LAYOUT ── */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    section {
+      padding: 100px 0;
+    }
+
+    /* ── FADE-IN ANIMATIONS ── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .fade-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .fade-up-delay-1 { transition-delay: 0.1s; }
+    .fade-up-delay-2 { transition-delay: 0.2s; }
+    .fade-up-delay-3 { transition-delay: 0.3s; }
+    .fade-up-delay-4 { transition-delay: 0.4s; }
+
+    /* ── HERO ── */
+    #hero {
+      padding-top: 160px;
+      padding-bottom: 120px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #hero::before {
+      content: '';
+      position: absolute;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: var(--accent-dim);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent-hover);
+      margin-bottom: 32px;
+    }
+
+    h1 {
+      font-size: clamp(32px, 6vw, 72px);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.08;
+      margin-bottom: 24px;
+      background: linear-gradient(180deg, #ffffff 0%, #a1a1aa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(16px, 2.5vw, 20px);
+      color: var(--text-secondary);
+      max-width: 620px;
+      margin: 0 auto 48px;
+      line-height: 1.6;
+    }
+
+    /* ── INSTALL BLOCK ── */
+    .install-block {
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      background: var(--code-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 0;
+      margin-bottom: 24px;
+      max-width: 100%;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.1), 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .install-prefix {
+      padding: 14px 16px;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 14px;
+      border-right: 1px solid var(--card-border);
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .install-cmd {
+      padding: 14px 20px;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 14px;
+      color: #e2e8f0;
+      white-space: nowrap;
+      overflow-x: auto;
+      min-width: 0;
+    }
+
+    .install-cmd::-webkit-scrollbar { display: none; }
+
+    #typed-cmd {
+      display: inline;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1em;
+      background: var(--accent);
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      animation: blink 1s step-end infinite;
+    }
+
+    .cursor.hidden {
+      display: none;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .copy-btn {
+      padding: 14px 18px;
+      background: transparent;
+      border: none;
+      border-left: 1px solid var(--card-border);
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: color 0.2s, background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .copy-btn:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .copy-btn.copied {
+      color: var(--green);
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: var(--accent);
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(99, 102, 241, 0.45);
+    }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: transparent;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      transition: color 0.2s, border-color 0.2s, transform 0.15s;
+    }
+
+    .btn-ghost:hover {
+      color: var(--text);
+      border-color: #3f3f5f;
+      transform: translateY(-1px);
+    }
+
+    /* ── SECTION LABEL ── */
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: clamp(24px, 4vw, 40px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+      line-height: 1.15;
+    }
+
+    .section-subtitle {
+      font-size: 17px;
+      color: var(--text-secondary);
+      max-width: 560px;
+      line-height: 1.6;
+    }
+
+    /* ── HOW IT WORKS ── */
+    #how-it-works {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    #how-it-works .container {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 80px;
+      align-items: start;
+    }
+
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .step {
+      display: flex;
+      gap: 20px;
+      padding: 28px 0;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+
+    .step:last-child {
+      border-bottom: none;
+    }
+
+    .step-number {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-top: 2px;
+    }
+
+    .step-content h3 {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+
+    .step-content p {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .step-content code {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      background: var(--accent-dim);
+      color: var(--accent-hover);
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    /* ── FEATURES ── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 56px;
+    }
+
+    .feature-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 28px;
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.4), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .feature-card:hover {
+      border-color: rgba(99, 102, 241, 0.35);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+    }
+
+    .feature-card:hover::before {
+      opacity: 1;
+    }
+
+    .feature-icon {
+      font-size: 28px;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .feature-card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .feature-card p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    /* ── TERMINAL ── */
+    #terminal-section {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    #terminal-section .container {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      gap: 80px;
+      align-items: center;
+    }
+
+    .terminal-window {
+      background: #0d0d1a;
+      border: 1px solid #2a2a4e;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(99,102,241,0.1);
+    }
+
+    .terminal-header {
+      background: #13132a;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #2a2a4e;
+    }
+
+    .terminal-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .terminal-dot.red { background: #ff5f57; }
+    .terminal-dot.yellow { background: #febc2e; }
+    .terminal-dot.green { background: #28c840; }
+
+    .terminal-title {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-left: auto;
+      margin-right: auto;
+      font-family: monospace;
+    }
+
+    .terminal-body {
+      padding: 20px;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      overflow-x: auto;
+    }
+
+    .terminal-body::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .terminal-body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .terminal-body::-webkit-scrollbar-thumb {
+      background: #2a2a4e;
+      border-radius: 2px;
+    }
+
+    .t-prompt { color: var(--accent); }
+    .t-cmd { color: #e2e8f0; }
+    .t-blank { height: 8px; }
+    .t-h1 { color: #ffffff; font-weight: 700; font-size: 14px; }
+    .t-h2 { color: #a78bfa; font-weight: 600; }
+    .t-text { color: #94a3b8; }
+    .t-item { color: #cbd5e1; }
+    .t-accent { color: #34d399; }
+    .t-warn { color: #fb923c; }
+    .t-link { color: #60a5fa; }
+    .t-ok { color: #22c55e; }
+
+    /* ── COMMANDS ── */
+    .commands-table {
+      margin-top: 56px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .commands-table-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      padding: 12px 24px;
+      background: rgba(99, 102, 241, 0.08);
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .commands-table-header span {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .command-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+      align-items: center;
+    }
+
+    .command-row:last-child {
+      border-bottom: none;
+    }
+
+    .command-row:hover {
+      background: rgba(255,255,255,0.02);
+    }
+
+    .command-code {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      color: var(--accent-hover);
+    }
+
+    .command-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 0;
+      text-align: center;
+    }
+
+    .footer-links {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .footer-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .footer-link:hover {
+      color: var(--text);
+    }
+
+    .footer-separator {
+      color: var(--border);
+      user-select: none;
+    }
+
+    .footer-sub {
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      section {
+        padding: 72px 0;
+      }
+
+      #how-it-works .container,
+      #terminal-section .container {
+        grid-template-columns: 1fr;
+        gap: 48px;
+      }
+
+      .install-block {
+        flex-direction: column;
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .install-prefix {
+        border-right: none;
+        border-bottom: 1px solid var(--card-border);
+        padding: 10px 16px;
+      }
+
+      .install-cmd {
+        padding: 10px 16px;
+        font-size: 12px;
+      }
+
+      .copy-btn {
+        border-left: none;
+        border-top: 1px solid var(--card-border);
+        justify-content: center;
+        padding: 10px 16px;
+        width: 100%;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .command-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+        padding: 14px 20px;
+      }
+
+      .commands-table-header {
+        display: none;
+      }
+
+      .command-code {
+        font-size: 12px;
+      }
+
+      .command-desc::before {
+        content: '→ ';
+        color: var(--text-dim);
+      }
+
+      nav {
+        padding: 0 16px;
+      }
+
+      .container {
+        padding: 0 16px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 28px;
+      }
+
+      .install-cmd {
+        font-size: 11px;
+      }
+
+      .hero-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn-primary,
+      .btn-ghost {
+        justify-content: center;
+      }
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin: 0 auto;
+    }
+
+    /* scroll glow */
+    .glow-wrap {
+      position: relative;
+    }
+    .glow-wrap::after {
+      content: '';
+      position: absolute;
+      bottom: -60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 300px;
+      height: 120px;
+      background: radial-gradient(ellipse, rgba(99,102,241,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#" class="nav-logo">
+      <span class="nav-logo-dot"></span>
+      Cortex
+    </a>
+    <a href="https://github.com/kovalenko-tech/cortex" class="nav-link" target="_blank" rel="noopener">GitHub →</a>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="container">
+      <div class="hero-badge fade-up">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="7" cy="7" r="7" fill="#6366f1" opacity="0.25"/>
+          <circle cx="7" cy="7" r="3" fill="#6366f1"/>
+        </svg>
+        Open Source · MIT License
+      </div>
+
+      <h1 class="fade-up fade-up-delay-1">Give Claude Code full<br>knowledge of your project</h1>
+
+      <p class="hero-subtitle fade-up fade-up-delay-2">
+        Cortex analyzes git history, code structure, and security — generating context files your coding agent reads automatically.
+      </p>
+
+      <div class="install-block fade-up fade-up-delay-3" id="install-block">
+        <span class="install-prefix">$</span>
+        <span class="install-cmd" id="install-cmd-text">
+          <span id="typed-cmd"></span><span class="cursor" id="cursor"></span>
+        </span>
+        <button class="copy-btn" id="copy-btn" onclick="copyInstall()">
+          <svg id="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <span id="copy-label">Copy</span>
+        </button>
+      </div>
+
+      <div class="hero-actions fade-up fade-up-delay-4">
+        <a href="https://github.com/kovalenko-tech/cortex" class="btn-primary" target="_blank" rel="noopener">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+          View on GitHub
+        </a>
+        <a href="#how-it-works" class="btn-ghost">
+          How it works
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how-it-works">
+    <div class="container">
+      <div class="fade-up">
+        <p class="section-label">Simple workflow</p>
+        <h2 class="section-title">Up and running<br>in 60 seconds</h2>
+        <p class="section-subtitle">No config files, no build steps. One command installs Cortex, one command analyzes your project.</p>
+      </div>
+
+      <div class="steps">
+        <div class="step fade-up fade-up-delay-1">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3>Install</h3>
+            <p>Run one <code>curl</code> command. Cortex installs globally and is ready immediately.</p>
+          </div>
+        </div>
+        <div class="step fade-up fade-up-delay-2">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3>Analyze your project</h3>
+            <p>Run <code>cortex analyze</code> in any repo. It mines git history, maps code structure, and runs a security scan — generating <code>.claude/</code> context files.</p>
+          </div>
+        </div>
+        <div class="step fade-up fade-up-delay-3">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3>Commit and you're done</h3>
+            <p>Commit the <code>.claude/</code> folder. Claude Code reads it automatically on every session — no extra setup needed.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="container">
+      <div class="fade-up" style="text-align:center; margin-bottom: 0;">
+        <p class="section-label">What Cortex does</p>
+        <h2 class="section-title">Deep project intelligence</h2>
+        <p class="section-subtitle" style="margin: 0 auto;">Four analysis layers that give your coding agent context no human could maintain manually.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card fade-up fade-up-delay-1">
+          <span class="feature-icon">🔍</span>
+          <h3>Git history mining</h3>
+          <p>Tracks every bug fix, hotfix, and refactor in your codebase. Claude knows which files have a troubled past before touching them.</p>
+        </div>
+        <div class="feature-card fade-up fade-up-delay-2">
+          <span class="feature-icon">🔗</span>
+          <h3>Co-change analysis</h3>
+          <p>Statistically identifies which files break together. Change <code>auth.py</code>? Cortex knows you also need to update <code>middleware/session.py</code>.</p>
+        </div>
+        <div class="feature-card fade-up fade-up-delay-3">
+          <span class="feature-icon">🔒</span>
+          <h3>Security audit</h3>
+          <p>SAST analysis per file with secret scanning across your entire git history. Issues are surfaced in context — not buried in a separate report.</p>
+        </div>
+        <div class="feature-card fade-up fade-up-delay-4">
+          <span class="feature-icon">🤖</span>
+          <h3>AI summaries</h3>
+          <p>Optional Claude Haiku-powered overview per file. Explains purpose, patterns, and gotchas in plain language — accelerating cold starts.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TERMINAL MOCKUP -->
+  <section id="terminal-section">
+    <div class="container">
+      <div class="fade-up">
+        <p class="section-label">In practice</p>
+        <h2 class="section-title">What Claude Code sees</h2>
+        <p class="section-subtitle">Rich, structured context for every file — written once, used on every edit.</p>
+      </div>
+
+      <div class="terminal-window fade-up fade-up-delay-2">
+        <div class="terminal-header">
+          <div class="terminal-dot red"></div>
+          <div class="terminal-dot yellow"></div>
+          <div class="terminal-dot green"></div>
+          <span class="terminal-title">terminal</span>
+        </div>
+        <div class="terminal-body">
+          <div><span class="t-prompt">$</span> <span class="t-cmd">cortex context src/auth.py</span></div>
+          <div class="t-blank"></div>
+          <div class="t-h1"># src/auth.py</div>
+          <div class="t-blank"></div>
+          <div class="t-h2">## Historical Insights</div>
+          <div class="t-item">- <span class="t-warn">[Bug Fix]</span> 2024-03-15: Session fails on UTC+0 timezone</div>
+          <div class="t-text">&nbsp;&nbsp;Fix: Always use datetime.timezone.utc</div>
+          <div class="t-blank"></div>
+          <div class="t-h2">## Edit Checklist</div>
+          <div class="t-item">- Run: <span class="t-link">pytest tests/test_auth.py -v</span></div>
+          <div class="t-item">- Check: <span class="t-link">SESSION_TIMEOUT in config/settings.py</span></div>
+          <div class="t-blank"></div>
+          <div class="t-h2">## Related Files</div>
+          <div class="t-item">- <span class="t-link">tests/test_auth.py</span> <span class="t-accent">[co-change: 92%]</span></div>
+          <div class="t-item">- <span class="t-link">middleware/session.py</span> <span class="t-accent">[co-change: 67%]</span></div>
+          <div class="t-blank"></div>
+          <div class="t-h2">## Security Notes</div>
+          <div class="t-item"><span class="t-ok">✅ No issues found</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMANDS -->
+  <section id="commands">
+    <div class="container">
+      <div class="fade-up">
+        <p class="section-label">CLI reference</p>
+        <h2 class="section-title">All commands</h2>
+        <p class="section-subtitle">Cortex stays out of your way. Five commands cover everything.</p>
+      </div>
+
+      <div class="commands-table fade-up fade-up-delay-1">
+        <div class="commands-table-header">
+          <span>Command</span>
+          <span>Description</span>
+        </div>
+        <div class="command-row">
+          <div class="command-code">cortex analyze</div>
+          <div class="command-desc">Analyze full project — git, structure, security</div>
+        </div>
+        <div class="command-row">
+          <div class="command-code">cortex analyze --since HEAD~20</div>
+          <div class="command-desc">Only re-analyze recently changed files</div>
+        </div>
+        <div class="command-row">
+          <div class="command-code">cortex context src/auth.py</div>
+          <div class="command-desc">Show rich context for a single file</div>
+        </div>
+        <div class="command-row">
+          <div class="command-code">cortex security</div>
+          <div class="command-desc">Run security audit only — SAST + secret scan</div>
+        </div>
+        <div class="command-row">
+          <div class="command-code">cortex install-hook</div>
+          <div class="command-desc">Auto-update context on every git commit</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="https://github.com/kovalenko-tech/cortex" class="footer-link" target="_blank" rel="noopener">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+          GitHub
+        </a>
+        <span class="footer-separator">·</span>
+        <a href="https://github.com/kovalenko-tech/cortex/blob/main/LICENSE" class="footer-link" target="_blank" rel="noopener">MIT License</a>
+      </div>
+      <p class="footer-sub">Made for Claude Code</p>
+    </div>
+  </footer>
+
+  <script>
+    // ── TYPING ANIMATION ──
+    const installCmd = 'curl -fsSL https://raw.githubusercontent.com/kovalenko-tech/cortex/main/install.sh | bash';
+    const typedEl = document.getElementById('typed-cmd');
+    const cursor = document.getElementById('cursor');
+    let i = 0;
+
+    function type() {
+      if (i < installCmd.length) {
+        typedEl.textContent += installCmd[i];
+        i++;
+        setTimeout(type, 38);
+      } else {
+        // done typing — keep blinking cursor
+      }
+    }
+
+    // Start typing after a brief delay
+    setTimeout(type, 600);
+
+    // ── COPY BUTTON ──
+    function copyInstall() {
+      navigator.clipboard.writeText(installCmd).then(() => {
+        const btn = document.getElementById('copy-btn');
+        const label = document.getElementById('copy-label');
+        const icon = document.getElementById('copy-icon');
+        btn.classList.add('copied');
+        label.textContent = 'Copied!';
+        icon.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+        icon.setAttribute('viewBox', '0 0 24 24');
+        setTimeout(() => {
+          btn.classList.remove('copied');
+          label.textContent = 'Copy';
+          icon.innerHTML = '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>';
+        }, 2000);
+      }).catch(() => {
+        // Fallback for older browsers
+        const ta = document.createElement('textarea');
+        ta.value = installCmd;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      });
+    }
+
+    // ── SCROLL FADE-IN ──
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.08,
+      rootMargin: '0px 0px -40px 0px'
+    });
+
+    // Observe all fade-up elements
+    document.querySelectorAll('.fade-up').forEach(el => {
+      observer.observe(el);
+    });
+
+    // Hero elements are visible on load
+    document.querySelectorAll('#hero .fade-up').forEach((el, i) => {
+      setTimeout(() => el.classList.add('visible'), i * 120);
+    });
+  </script>
+</body>
+</html>
