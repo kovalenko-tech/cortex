@@ -1,6 +1,6 @@
 # CodePrep — Project Knowledge Base Generator for Claude Code
 
-> Open-source alternative to [Codeset.ai](https://codeset.ai) — runs locally, free, supports Python / TypeScript / Dart / Go.  
+> runs locally, free, supports Python / TypeScript / Dart / Go.  
 > Generates `.claude/docs/` context files used by Claude Code on every session.
 
 ---
@@ -286,7 +286,6 @@ else:
 
 ## References
 
-- [Codeset.ai](https://codeset.ai) — inspiration
 - [semgrep](https://semgrep.dev) — SAST engine
 - [bandit](https://bandit.readthedocs.io) — Python security linter
 - [tree-sitter](https://tree-sitter.github.io) — multi-language AST parser

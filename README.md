@@ -1,40 +1,84 @@
 # CodePrep
 
-> Open-source alternative to [Codeset.ai](https://codeset.ai) — generates `.claude/docs/` knowledge base for your project from git history, static analysis and security audit.
+**Generate a `.claude/docs/` knowledge base for your project — from git history, static analysis and security audit.**
 
-When Claude Code opens a file, it immediately knows:
-- **Historical bugs** in that file and how they were fixed
-- **Tests to run** after making changes
-- **Pitfalls** — what breaks and why
-- **Co-change relationships** — files that historically break together
-- **Security issues** — SAST results per file
+When Claude Code opens a file it immediately knows the full context: historical bugs, pitfalls, related files, tests to run, and security issues. No manual documentation needed.
+
+## Install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kovalenko-tech/codeprep/main/install.sh | bash
+```
 
 ## Quick Start
 
 ```bash
-pip install codeprep
 cd your-project
 codeprep analyze
 ```
 
-This generates `.claude/docs/` — commit it to your repo. Now Claude Code has full project context on every session.
+Commit the generated `.claude/docs/` to your repo. Done.
 
-## How it works
+## What Claude Code sees
 
-See [PLAN.md](./PLAN.md) for full algorithm and roadmap.
+Before writing a single line of code, Claude Code runs:
+
+```bash
+python .claude/get_context.py src/auth.py
+```
+
+And gets:
+
+```
+# src/auth.py
+
+## Historical Insights
+- [Bug Fix] 2024-03-15: Session fails on UTC+0 timezone
+  Fix: Always use datetime.timezone.utc
+
+## Edit Checklist
+- Run: pytest tests/test_auth.py -v
+- Check constant: SESSION_TIMEOUT in config/settings.py
+
+## Pitfalls
+- Never call authenticate() before db.init()
+  Why: connection pool not initialized → RuntimeError
+
+## Related Files
+- tests/test_auth.py [co-change: 92%]
+- models/user.py [co-change: 67%]
+
+## Security Notes
+- ✅ No issues found
+```
+
+None of this is written by hand — CodePrep extracts it from your git history and codebase.
+
+## CLI
+
+```bash
+codeprep analyze                  # full analysis
+codeprep analyze --since HEAD~50  # incremental (last 50 commits)
+codeprep context src/auth.py      # context for one file
+codeprep security                 # security audit only
+```
 
 ## Supported Languages
 
-| Language | AST | Security |
-|----------|-----|----------|
-| Python | ✅ ast + rope | ✅ bandit |
-| TypeScript/JS | 🔜 tree-sitter | 🔜 semgrep |
-| Dart/Flutter | 🔜 tree-sitter | 🔜 semgrep |
-| Go | 🔜 go/ast | 🔜 semgrep |
+| Language | AST Analysis | Security |
+|----------|-------------|----------|
+| Python | ✅ | ✅ bandit |
+| TypeScript / JS | 🔜 | 🔜 semgrep |
+| Dart / Flutter | 🔜 | 🔜 semgrep |
+| Go | 🔜 | 🔜 semgrep |
 
 ## Security
 
-All analysis runs **locally**. No code is sent to external APIs.
+All analysis runs **locally**. No code is sent to any external service.
+
+## How it works
+
+See [PLAN.md](./PLAN.md) for the full algorithm.
 
 ## License
 
