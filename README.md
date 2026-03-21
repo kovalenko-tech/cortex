@@ -1,6 +1,6 @@
 # cortex
 
-Project knowledge base for Claude Code. Analyzes git history, code structure, and security — generates `.claude/docs/` context files your coding agent reads automatically.
+Project knowledge base for Claude Code. Analyzes git history, risk, PR decisions, and security — generates `.claude/docs/` context files your coding agent reads automatically.
 
 ## Install
 
@@ -17,34 +17,57 @@ npx cortex-ai analyze
 
 ```bash
 cd your-project
+cortex setup    # interactive wizard
+```
+
+Or manually:
+```bash
 cortex analyze
 git add .claude/
 git commit -m "add cortex context"
 ```
 
-## Interactive setup
+## What Claude Code sees per file
 
-```bash
-cortex setup
 ```
+> ⚡ Fresh — analyzed 2026-03-21 21:50 UTC
+> 🔴 HIGH RISK (score: 65/100) — 12 bug fixes · no test coverage
 
-Walks you through: analyze → generate CLAUDE.md → configure MCP → install git hook.
+## Historical Insights
+- [Bug Fix] 2024-03-15: Session fails on UTC+0 timezone
+
+## Decisions & Context
+- ✅ Chose Redis over Memcached because we need persistence
+  PR #234 — @john
+- 🚫 Don't cache this endpoint — caused stale data bugs
+  PR #198 — @maria
+
+## Edit Checklist
+- Run: pytest tests/test_auth.py -v
+
+## Security Notes
+- ✅ No issues found
+```
 
 ## Commands
 
 ```
+cortex setup                   interactive setup wizard
 cortex analyze                 analyze full project
 cortex analyze --since HEAD~20 only changed files
-cortex analyze --no-llm        skip AI summaries (faster)
-cortex analyze --max-files 100 limit files analyzed
+cortex analyze --no-llm        skip AI summaries
 cortex analyze --no-cache      force full re-analysis
-cortex init                    generate CLAUDE.md for your project
+cortex analyze --max-files 100 limit files analyzed
+cortex init                    generate CLAUDE.md
 cortex context src/auth.py     show context for one file
-cortex security                security audit only
+cortex security                security audit
 cortex deps                    scan dependencies for vulnerabilities
-cortex diff main               update context for files changed vs branch
+cortex risks                   show risk scores for all files
+cortex freshness               show how stale the context is
+cortex mine-prs                mine GitHub PR decisions
+cortex diff main               update context for changed files
 cortex status                  show analysis status
-cortex clean                   remove all generated context files
+cortex clean                   remove all context files
 cortex install-hook            auto-update on every commit
 cortex watch                   auto-update when commits arrive
 cortex mcp                     start MCP server for Claude Code
@@ -64,17 +87,6 @@ Add to `.claude/settings.json`:
 }
 ```
 
-Claude Code will automatically get context for every file you open.
-
-## AI summaries
-
-```bash
-export ANTHROPIC_API_KEY=sk-ant-...
-cortex analyze
-```
-
-Optional. Without it, all other features still work.
-
 ## GitHub PR knowledge
 
 Mine implicit decisions from PR discussions:
@@ -82,17 +94,14 @@ Mine implicit decisions from PR discussions:
 ```bash
 export GITHUB_TOKEN=ghp_...
 cortex mine-prs
-cortex analyze  # context now includes PR decisions
+cortex analyze
 ```
 
-Claude Code will see in each file's context:
+## AI summaries
 
-```
-## Decisions & Context
-- ✅ Chose Redis over Memcached because we need persistence across restarts
-  PR #234 — @john
-- 🚫 Don't cache this endpoint — caused stale data bugs in production
-  PR #198 — @maria
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+cortex analyze
 ```
 
 ## License

@@ -838,7 +838,7 @@
       <h1 class="fade-up fade-up-delay-1">Give Claude Code full<br>knowledge of your project</h1>
 
       <p class="hero-subtitle fade-up fade-up-delay-2">
-        Cortex analyzes your git history, code structure, security and dependencies — giving Claude Code full project knowledge. Parallel analysis, smart caching, MCP integration.
+        Cortex analyzes git history, risk scores, PR decisions and security — generating context files with freshness tracking and MCP integration.
       </p>
 
       <div class="install-block fade-up fade-up-delay-3" id="install-block">
@@ -957,6 +957,16 @@
           <h3>Parallel Analysis</h3>
           <p>Analyzes up to 8 files simultaneously using thread pool execution. Large projects run 5-8x faster than sequential analysis.</p>
         </div>
+        <div class="feature-card fade-up fade-up-delay-1">
+          <span class="feature-icon">📊</span>
+          <h3>Risk Scoring</h3>
+          <p>Every file gets a risk score (0–100) based on bug history, test coverage, security issues and how many files depend on it. Claude Code prioritizes carefully.</p>
+        </div>
+        <div class="feature-card fade-up fade-up-delay-2">
+          <span class="feature-icon">💬</span>
+          <h3>PR Knowledge</h3>
+          <p>Mines GitHub PR comments and discussions for implicit decisions: why Redis was chosen, what breaks, what's intentional. Knowledge that lives nowhere in code.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -982,17 +992,24 @@
           <div class="t-blank"></div>
           <div class="t-h1"># src/auth.py</div>
           <div class="t-blank"></div>
+          <div class="t-accent">&gt; ⚡ Fresh — analyzed 2026-03-21 UTC</div>
+          <div class="t-warn">&gt; 🔴 HIGH RISK (score: 65/100) — 12 bug fixes · no test coverage</div>
+          <div class="t-blank"></div>
           <div class="t-h2">## Historical Insights</div>
           <div class="t-item">- <span class="t-warn">[Bug Fix]</span> 2024-03-15: Session fails on UTC+0 timezone</div>
           <div class="t-text">&nbsp;&nbsp;Fix: Always use datetime.timezone.utc</div>
           <div class="t-blank"></div>
+          <div class="t-h2">## Decisions &amp; Context</div>
+          <div class="t-item">- <span class="t-ok">✅</span> Chose JWT over sessions for stateless auth</div>
+          <div class="t-text">&nbsp;&nbsp;PR #234 — @john</div>
+          <div class="t-item">- <span class="t-warn">🚫</span> Don't call authenticate() before db.init()</div>
+          <div class="t-text">&nbsp;&nbsp;PR #156 — @maria</div>
+          <div class="t-blank"></div>
           <div class="t-h2">## Edit Checklist</div>
           <div class="t-item">- Run: <span class="t-link">pytest tests/test_auth.py -v</span></div>
-          <div class="t-item">- Check: <span class="t-link">SESSION_TIMEOUT in config/settings.py</span></div>
           <div class="t-blank"></div>
           <div class="t-h2">## Related Files</div>
           <div class="t-item">- <span class="t-link">tests/test_auth.py</span> <span class="t-accent">[co-change: 92%]</span></div>
-          <div class="t-item">- <span class="t-link">middleware/session.py</span> <span class="t-accent">[co-change: 67%]</span></div>
           <div class="t-blank"></div>
           <div class="t-h2">## Security Notes</div>
           <div class="t-item"><span class="t-ok">✅ No issues found</span></div>
@@ -1046,6 +1063,10 @@
           <span>Description</span>
         </div>
         <div class="command-row">
+          <div class="command-code">cortex setup</div>
+          <div class="command-desc">interactive setup wizard</div>
+        </div>
+        <div class="command-row">
           <div class="command-code">cortex analyze</div>
           <div class="command-desc">analyze full project</div>
         </div>
@@ -1058,12 +1079,12 @@
           <div class="command-desc">skip AI summaries (faster)</div>
         </div>
         <div class="command-row">
-          <div class="command-code">cortex analyze --max-files 100</div>
-          <div class="command-desc">limit files analyzed</div>
-        </div>
-        <div class="command-row">
           <div class="command-code">cortex analyze --no-cache</div>
           <div class="command-desc">force full re-analysis</div>
+        </div>
+        <div class="command-row">
+          <div class="command-code">cortex analyze --max-files 100</div>
+          <div class="command-desc">limit files analyzed</div>
         </div>
         <div class="command-row">
           <div class="command-code">cortex init</div>
@@ -1082,8 +1103,20 @@
           <div class="command-desc">scan dependencies for vulnerabilities</div>
         </div>
         <div class="command-row">
-          <div class="command-code">cortex diff &lt;branch&gt;</div>
-          <div class="command-desc">update context for files changed vs branch</div>
+          <div class="command-code">cortex risks</div>
+          <div class="command-desc">show risk scores for all files</div>
+        </div>
+        <div class="command-row">
+          <div class="command-code">cortex freshness</div>
+          <div class="command-desc">show how stale the context is</div>
+        </div>
+        <div class="command-row">
+          <div class="command-code">cortex mine-prs</div>
+          <div class="command-desc">mine GitHub PR decisions</div>
+        </div>
+        <div class="command-row">
+          <div class="command-code">cortex diff main</div>
+          <div class="command-desc">update context for changed files</div>
         </div>
         <div class="command-row">
           <div class="command-code">cortex status</div>
