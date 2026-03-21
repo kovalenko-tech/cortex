@@ -5,6 +5,7 @@ from ..miners.git_history import HistoricalInsight
 from ..analyzers.base import FileAnalysis
 from ..security.bandit_runner import SecurityIssue
 from ..security.secrets_scanner import SecretFinding
+from .llm_summary import generate_summary
 
 
 def generate(
@@ -26,6 +27,18 @@ def generate(
     lines.append(f"Language: {lang} | Constructs: {constructs_count}")
     if analysis and analysis.imports:
         lines.append(f"Key imports: {', '.join(analysis.imports[:5])}")
+
+    # LLM-enhanced summary (requires ANTHROPIC_API_KEY)
+    llm_summary = generate_summary(
+        filepath, repo_root,
+        analysis.constructs if analysis else [],
+        analysis.imports if analysis else [],
+        insights,
+        security_issues,
+    )
+    if llm_summary:
+        lines.append("")
+        lines.append(llm_summary)
     lines.append("")
 
     # Historical Insights

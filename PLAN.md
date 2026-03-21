@@ -244,26 +244,26 @@ else:
 ## Roadmap
 
 ### v0.1 — MVP
-- [ ] Git history mining (bug fix commits + co-change matrix)
-- [ ] Python AST analysis
-- [ ] Markdown file generation
-- [ ] CLI: `codeprep analyze`
+- [x] Git history mining (bug fix commits + co-change matrix)
+- [x] Python AST analysis
+- [x] Markdown file generation
+- [x] CLI: `codeprep analyze`
 
 ### v0.2 — Multi-language
-- [ ] TypeScript / JavaScript support
-- [ ] Dart / Flutter support
-- [ ] Go support
-- [ ] semgrep integration
+- [x] TypeScript / JavaScript support
+- [x] Dart / Flutter support
+- [x] Go support
+- [x] semgrep integration
 
 ### v0.3 — Intelligence
-- [ ] Incremental updates (changed files only)
-- [ ] LLM-enhanced summaries via Claude Haiku
-- [ ] `codeprep update --watch` (auto-update on commit via git hook)
+- [x] Incremental updates (changed files only)
+- [x] LLM-enhanced summaries via Claude Haiku
+- [x] `codeprep watch` (auto-update on new commits)
 
 ### v0.4 — Integrations
-- [ ] GitHub Action
-- [ ] Pre-commit hook
-- [ ] VS Code extension (shows context when file is opened)
+- [x] GitHub Action
+- [x] Pre-commit hook (`codeprep install-hook`)
+- [ ] VS Code extension (shows context when file is opened) — future
 
 ---
 

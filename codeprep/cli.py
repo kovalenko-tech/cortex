@@ -1,5 +1,6 @@
 """CLI entry point."""
 import click
+from pathlib import Path
 from rich.console import Console
 
 console = Console()
@@ -55,6 +56,53 @@ def security(repo):
                 issues_total += 1
     if issues_total == 0:
         console.print("[green]✅ No security issues found.[/]")
+
+
+@cli.command()
+@click.option("--repo", default=".", show_default=True)
+def install_hook(repo):
+    """Install git pre-commit hook to auto-update .claude/docs/ on each commit."""
+    import stat
+    hook_path = Path(repo) / ".git" / "hooks" / "pre-commit"
+    hook_content = """#!/bin/bash
+# CodePrep: update context for staged files
+STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+if [ -n "$STAGED" ]; then
+    codeprep analyze --since HEAD 2>/dev/null || true
+    git add .claude/docs/ 2>/dev/null || true
+fi
+"""
+    hook_path.write_text(hook_content)
+    hook_path.chmod(hook_path.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+    console.print(f"[green]✓[/] Pre-commit hook installed at {hook_path}")
+    console.print("[dim]Now .claude/docs/ will auto-update on every commit.[/]")
+
+
+@cli.command()
+@click.option("--repo", default=".", show_default=True)
+@click.option("--interval", default=30, show_default=True, help="Poll interval in seconds")
+def watch(repo, interval):
+    """Watch for file changes and auto-update context."""
+    import time
+    console.print(f"[blue]Watching[/] {repo} every {interval}s... (Ctrl+C to stop)")
+    last_hash = ""
+    while True:
+        try:
+            import git
+            r = git.Repo(repo, search_parent_directories=True)
+            current_hash = r.head.commit.hexsha
+            if current_hash != last_hash:
+                if last_hash:
+                    console.print(f"[dim]New commit detected, updating...[/]")
+                    from .core import CodePrep
+                    CodePrep().analyze(repo_path=repo, since=f"{last_hash[:8]}..HEAD")
+                last_hash = current_hash
+            time.sleep(interval)
+        except KeyboardInterrupt:
+            console.print("\n[yellow]Watch stopped.[/]")
+            break
+        except Exception:
+            time.sleep(interval)
 
 
 if __name__ == "__main__":

@@ -1,20 +1,23 @@
 # codeprep/cli.py
 
 ## Overview
-Language: python | Constructs: 4
-Key imports: click, rich.console, core, pathlib, os
+Language: python | Constructs: 6
+Key imports: click, pathlib, rich.console, core, pathlib
 
 ## Key Constructs
-- **cli** (function, line 10) — CodePrep — generates .claude/docs/ context for Claude Code.
-- **analyze** (function, line 19) — Analyze repository and generate .claude/docs/ context.
-- **context** (function, line 27) — Print context for a specific file.
-- **security** (function, line 39) — Run security audit only.
+- **cli** (function, line 11) — CodePrep — generates .claude/docs/ context for Claude Code.
+- **analyze** (function, line 20) — Analyze repository and generate .claude/docs/ context.
+- **context** (function, line 28) — Print context for a specific file.
+- **security** (function, line 40) — Run security audit only.
+- **install_hook** (function, line 63) — Install git pre-commit hook to auto-update .claude/docs/ on each commit.
+- **watch** (function, line 84) — Watch for file changes and auto-update context.
 
 ## Related Files
-- `PLAN.md` [co-change: 100%]
-- `README.md` [co-change: 100%]
-- `codeprep/__init__.py` [co-change: 100%]
-- `pyproject.toml` [co-change: 100%]
+- `.claude/docs/SECURITY_REPORT.md` [co-change: 100%]
+- `.claude/docs/SUMMARY.md` [co-change: 100%]
+- `.claude/docs/codeprep/__init__.py.md` [co-change: 100%]
+- `.claude/docs/codeprep/analyzers/__init__.py.md` [co-change: 100%]
+- `.claude/docs/codeprep/analyzers/base.py.md` [co-change: 100%]
 
 ## Security Notes
 - ✅ No issues found

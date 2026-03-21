@@ -8,5 +8,12 @@ Key imports: collections, git
 - **get_cochange_map** (function, line 6) — Return {file: {related_file: score}} for the whole repo.
 - **get_related_files** (function, line 45) — Return top N related files for a given file, sorted by score desc.
 
+## Related Files
+- `.claude/docs/SECURITY_REPORT.md` [co-change: 100%]
+- `.claude/docs/SUMMARY.md` [co-change: 100%]
+- `.claude/docs/codeprep/__init__.py.md` [co-change: 100%]
+- `.claude/docs/codeprep/analyzers/__init__.py.md` [co-change: 100%]
+- `.claude/docs/codeprep/analyzers/base.py.md` [co-change: 100%]
+
 ## Security Notes
 - ✅ No issues found

@@ -16,6 +16,7 @@ codeprep/analyzers/go_analyzer.py
 codeprep/analyzers/js_analyzer.py
 codeprep/analyzers/python_analyzer.py
 codeprep/generators/__init__.py
+codeprep/generators/llm_summary.py
 codeprep/generators/markdown_gen.py
 codeprep/generators/summary_gen.py
 codeprep/miners/__init__.py

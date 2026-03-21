@@ -2,6 +2,17 @@
 import os
 from pathlib import Path
 
+
+def get_changed_files(repo_path: str, since: str) -> set[str]:
+    """Return set of relative file paths changed since `since` (e.g. HEAD~10, 2024-01-01)."""
+    import git
+    repo = git.Repo(repo_path, search_parent_directories=True)
+    try:
+        diff = repo.git.diff('--name-only', since, 'HEAD')
+        return set(line.strip() for line in diff.splitlines() if line.strip())
+    except git.GitCommandError:
+        return set()
+
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 
@@ -71,6 +82,13 @@ class CodePrep:
         if not files:
             console.print("[yellow]No source files found.[/]")
             return
+
+        # Incremental mode: filter to only changed files
+        if since:
+            changed = get_changed_files(repo_root, since)
+            before = len(files)
+            files = [f for f in files if os.path.relpath(f, repo_root) in changed]
+            console.print(f"[dim]Incremental mode: {len(files)} files changed since {since}[/]")
 
         # Build co-change map once
         console.print(f"[dim]Mining git history...[/]")

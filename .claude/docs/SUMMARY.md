@@ -1,8 +1,8 @@
 # Project Summary — CodePrep Analysis
 
-**Files analyzed:** 19
-**Total constructs:** 37
+**Files analyzed:** 20
+**Total constructs:** 41
 **Security issues:** 0
 
 ## Languages
-- python: 19 files
+- python: 20 files
