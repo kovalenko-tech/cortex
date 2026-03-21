@@ -1,36 +1,37 @@
 # CodePrep — Project Knowledge Base Generator for Claude Code
 
-> Аналог Codeset.ai — відкритий, локальний, безкоштовний.  
-> Генерує `.claude/docs/` контекст для кожного файлу проекту на основі git history, статичного аналізу та security audit.
+> Open-source alternative to [Codeset.ai](https://codeset.ai) — runs locally, free, supports Python / TypeScript / Dart / Go.  
+> Generates `.claude/docs/` context files used by Claude Code on every session.
 
 ---
 
-## Мета
+## Goal
 
-Коли Claude Code відкриває файл — він повинен одразу знати:
-- Які баги були в цьому файлі і як їх фіксили
-- Які тести запускати після змін
-- Які підводні камені та залежності
-- Які файли зазвичай ламаються разом
-- Чи є security проблеми в цьому файлі
+When Claude Code opens a file it should immediately know:
+- Which bugs occurred in this file and how they were fixed
+- Which tests to run after making changes
+- Which pitfalls and hidden dependencies exist
+- Which files historically break together (co-change)
+- Whether there are security issues in this file
 
 ---
 
-## Алгоритм (4 модулі)
+## Algorithm (4 modules)
 
 ### 1. Git History Mining
-**Що робимо:** аналізуємо всі коміти що торкались кожного файлу
 
-```
+**What we do:** analyze every commit that touched each file.
+
+```bash
 git log --follow --diff-filter=M --format="%H|%s|%ae|%ad" -- <file>
-git show <commit> -- <file>  # отримуємо diff
+git show <commit> -- <file>   # get the diff
 ```
 
-**Витягуємо:**
-- Bug fix коміти (ключові слова: fix, bug, hotfix, patch, resolve)
-- Refactor коміти (refactor, cleanup, improve)
-- Причина зміни з commit message
-- Diff — що саме змінилось
+**We extract:**
+- Bug fix commits — keywords: `fix`, `bug`, `hotfix`, `patch`, `resolve`
+- Refactor commits — keywords: `refactor`, `cleanup`, `improve`
+- Root cause from commit message
+- Actual diff — what exactly changed
 
 **Output:**
 ```markdown
@@ -43,78 +44,85 @@ git show <commit> -- <file>  # отримуємо diff
 ---
 
 ### 2. Co-change Analysis
-**Що робимо:** знаходимо файли які змінювались разом
 
-```
-git log --name-only --format="" | build_cochange_matrix()
+**What we do:** find files that changed together.
+
+```bash
+git log --name-only --format=""   # list of files per commit
 ```
 
-**Алгоритм:**
-1. Для кожного коміту — список змінених файлів
-2. Будуємо матрицю: скільки разів файл A і файл B змінювались разом
-3. Нормалізуємо: `score = co_changes / min(changes_A, changes_B)`
-4. Якщо score > 0.3 — файли пов'язані
+**Algorithm:**
+1. For each commit — collect the list of changed files
+2. Build a co-change matrix: how many times did file A and file B change together
+3. Normalize: `score = co_changes / min(changes_A, changes_B)`
+4. If score > 0.3 — files are related
 
 **Output:**
 ```markdown
 ### Related Files
-- `auth/session.py` [co-change: 78%] — якщо змінюєш auth.py, перевір session.py
-- `tests/test_auth.py` [co-change: 92%] — тести для цього файлу
+- `auth/session.py` [co-change: 78%] — if you touch auth.py, review session.py
+- `tests/test_auth.py` [co-change: 92%] — tests for this file
 ```
 
 ---
 
 ### 3. Static Analysis (AST + Call Graph)
-**Що робимо:** аналізуємо структуру коду без виконання
+
+**What we do:** analyze code structure without executing it.
 
 **Per language:**
-- **Python:** `ast` модуль + `rope` або `jedi` для call graph
-- **JavaScript/TypeScript:** `@typescript-eslint/parser` + `madge` для dependencies
-- **Dart/Flutter:** `dart analyze` + власний AST парсер через `analyzer` package
-- **Go:** `go/ast` + `go/callgraph`
+| Language | Tool |
+|----------|------|
+| Python | `ast` + `rope` / `jedi` |
+| TypeScript / JS | `tree-sitter` + `madge` |
+| Dart / Flutter | `tree-sitter-dart` + `dart analyze` |
+| Go | `go/ast` + `go/callgraph` |
 
-**Витягуємо:**
-- Функції та їх callers/callees
-- Імпорти та залежності
-- Публічний API файлу
-- Тести що покривають цей файл
+**We extract:**
+- Functions and their callers / callees
+- Imports and module dependencies
+- Public API surface of the file
+- Tests that cover this file
 
 **Output:**
 ```markdown
 ### Key Constructs
-- **authenticate()**: Validates credentials, returns JWT
-  Called by: api/routes.py:42, middleware/auth.py:18
+- **authenticate(email, password)** → JWT token
+  Called by: api/routes.py:42 (login_handler)
   Tests: tests/test_auth.py::test_login_success
 
 ### Edit Checklist
-Tests to run: `pytest tests/test_auth.py -q`
-Constants: `SESSION_TIMEOUT` in config/settings.py
+- Run: `pytest tests/test_auth.py -q`
+- Check constant: SESSION_TIMEOUT in config/settings.py
 ```
 
 ---
 
 ### 4. Security Audit
-**Що робимо:** SAST аналіз кожного файлу
 
-**Інструменти per language:**
-- **Python:** `bandit` — SQL injection, hardcoded secrets, unsafe eval
-- **JS/TS:** `eslint-plugin-security` + `semgrep`
-- **Dart:** `dart analyze` + custom rules для Flutter
-- **All:** `semgrep` з OWASP ruleset — universal SAST
-- **Secrets:** `gitleaks` або `truffleHog` — API keys в git history
+**What we do:** SAST analysis per file.
+
+**Tools per language:**
+| Language | Tool | Detects |
+|----------|------|---------|
+| Python | `bandit` | SQL injection, unsafe eval, hardcoded secrets |
+| JS / TS | `eslint-plugin-security` + `semgrep` | XSS, prototype pollution |
+| Dart | `dart analyze` + custom semgrep rules | Insecure storage, http:// |
+| All | `semgrep` (OWASP ruleset) | Universal SAST |
+| Git history | `gitleaks` | Leaked API keys, tokens, passwords |
 
 **Output:**
 ```markdown
 ### Security Notes
 - ⚠️ [MEDIUM] Line 47: User input passed to SQL query without sanitization
-  Rule: B608 (bandit) — Use parameterized queries
-- ⚠️ [LOW] Line 12: Hardcoded timeout value — consider moving to config
+  Rule: B608 (bandit) — use parameterized queries
+- ⚠️ [LOW] Line 12: Hardcoded timeout — consider moving to config
 - ✅ No secrets found in git history
 ```
 
 ---
 
-## Структура output
+## Output Structure
 
 ```
 project/
@@ -124,12 +132,13 @@ project/
         auth.py.md
         models/user.py.md
         api/routes.py.md
-      SUMMARY.md          # огляд всього проекту
-      SECURITY_REPORT.md  # всі security issues в одному місці
-    get_context.py        # helper script для Claude Code
+      SUMMARY.md           # full project overview
+      SECURITY_REPORT.md   # all security issues in one place
+    get_context.py         # helper script for Claude Code
+  CLAUDE.md                # instructions for Claude Code
 ```
 
-### Формат кожного .md файлу
+### Per-file .md format
 
 ```markdown
 # src/auth.py
@@ -144,11 +153,11 @@ Authentication module. Handles login, token validation, session management.
 ## Edit Checklist
 - Run: `pytest tests/test_auth.py -v`
 - Check constant: SESSION_TIMEOUT (config/settings.py)
-- Update: API docs if public signature changes
+- Update API docs if public signature changes
 
 ## Pitfalls
 - Never call authenticate() before db.init()
-  Why: Connection pool not initialized → RuntimeError
+  Why: connection pool not initialized → RuntimeError
 
 ## Key Constructs
 - **authenticate(email, password)** → JWT token
@@ -165,30 +174,30 @@ Authentication module. Handles login, token validation, session management.
 
 ---
 
-## CLI Interface
+## CLI
 
 ```bash
-# Аналіз поточного проекту
+# Analyze current repository
 codeprep analyze
 
-# Аналіз конкретного репо
+# Analyze a specific repo
 codeprep analyze --repo /path/to/project
 
-# Тільки security audit
+# Security audit only
 codeprep security
 
-# Оновити тільки змінені файли (incremental)
+# Incremental update (only changed files)
 codeprep update --since HEAD~10
 
-# Отримати контекст для конкретного файлу (для Claude Code)
+# Get context for a specific file (used by Claude Code)
 codeprep context src/auth.py
 ```
 
 ---
 
-## Інтеграція з Claude Code
+## Claude Code Integration
 
-### CLAUDE.md (додати в корінь проекту)
+### CLAUDE.md (add to project root)
 ```markdown
 ## Project Context
 
@@ -199,10 +208,10 @@ python .claude/get_context.py <file_path>
 This gives you historical bugs, pitfalls, related files and security notes.
 ```
 
-### get_context.py
+### .claude/get_context.py
 ```python
 #!/usr/bin/env python3
-"""Helper: prints context for a file before Claude Code edits it."""
+"""Print context for a file before Claude Code edits it."""
 import sys, pathlib
 
 file = sys.argv[1] if len(sys.argv) > 1 else "."
@@ -216,70 +225,71 @@ else:
 
 ---
 
-## Стек
+## Tech Stack
 
-| Компонент | Технологія |
+| Component | Technology |
 |-----------|-----------|
 | CLI | Python 3.11+ (click) |
 | Git mining | GitPython |
-| Python AST | ast + rope |
-| JS/TS AST | tree-sitter |
-| Dart AST | tree-sitter-dart |
-| Security (Python) | bandit |
-| Security (Universal) | semgrep |
-| Secret scanning | gitleaks |
-| Output | Markdown |
-| Config | pyproject.toml / .codeprep.yml |
+| Python AST | `ast` + `rope` |
+| JS/TS/Dart AST | `tree-sitter` |
+| Security — Python | `bandit` |
+| Security — Universal | `semgrep` |
+| Secret scanning | `gitleaks` |
+| Output format | Markdown |
+| Config | `.codeprep.yml` |
 
 ---
 
 ## Roadmap
 
 ### v0.1 — MVP
-- [ ] Git history mining (bug fixes, co-change)
-- [ ] Python підтримка (AST + bandit)
-- [ ] Генерація .md файлів
+- [ ] Git history mining (bug fix commits + co-change matrix)
+- [ ] Python AST analysis
+- [ ] Markdown file generation
 - [ ] CLI: `codeprep analyze`
 
 ### v0.2 — Multi-language
-- [ ] JavaScript/TypeScript підтримка
-- [ ] Dart/Flutter підтримка
-- [ ] Go підтримка
+- [ ] TypeScript / JavaScript support
+- [ ] Dart / Flutter support
+- [ ] Go support
 - [ ] semgrep integration
 
 ### v0.3 — Intelligence
-- [ ] Incremental updates (тільки змінені файли)
-- [ ] LLM-enhanced summaries (через claude haiku)
-- [ ] `codeprep update --watch` (авто-оновлення при коміті)
+- [ ] Incremental updates (changed files only)
+- [ ] LLM-enhanced summaries via Claude Haiku
+- [ ] `codeprep update --watch` (auto-update on commit via git hook)
 
-### v0.4 — Integration
+### v0.4 — Integrations
 - [ ] GitHub Action
 - [ ] Pre-commit hook
-- [ ] VS Code extension (показує контекст при відкритті файлу)
+- [ ] VS Code extension (shows context when file is opened)
 
 ---
 
-## Безпека
+## Security Principles
 
-### Що аналізуємо
+### What we scan for
 - SQL injection, XSS, command injection
 - Hardcoded secrets (API keys, passwords, tokens)
-- Небезпечні функції (eval, exec, pickle.loads)
-- Незахищені HTTP endpoints
-- Слабка криптографія (MD5, SHA1 для паролів)
+- Dangerous functions (`eval`, `exec`, `pickle.loads`, `dangerouslySetInnerHTML`)
+- Unprotected HTTP endpoints
+- Weak cryptography (MD5 / SHA1 for passwords)
+- Insecure dependencies (via `pip-audit`, `npm audit`)
 
-### Що НЕ відправляємо нікуди
-- Код залишається локально
-- Ніяких cloud API calls для аналізу
-- Всі інструменти запускаються локально
+### What we never do
+- No code is sent to any external API
+- All analysis runs locally
+- Output files contain only metadata, not raw source code
 
 ---
 
-## Referенс
+## References
 
-- [Codeset.ai](https://codeset.ai) — інспірація
+- [Codeset.ai](https://codeset.ai) — inspiration
 - [semgrep](https://semgrep.dev) — SAST engine
-- [bandit](https://bandit.readthedocs.io) — Python security
-- [tree-sitter](https://tree-sitter.github.io) — multi-lang AST
+- [bandit](https://bandit.readthedocs.io) — Python security linter
+- [tree-sitter](https://tree-sitter.github.io) — multi-language AST parser
 - [gitleaks](https://gitleaks.io) — secret scanning
-- [SWE-Bench](https://swebench.com) — benchmark для coding agents
+- [GitPython](https://gitpython.readthedocs.io) — git history access
+- [SWE-Bench](https://swebench.com) — coding agent benchmark
