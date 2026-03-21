@@ -601,6 +601,59 @@
       color: var(--text-secondary);
     }
 
+    /* ── FLAGS BLOCK ── */
+    .flags-block {
+      margin-top: 24px;
+    }
+
+    .flags-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+      padding-left: 4px;
+    }
+
+    .flags-table {
+      background: rgba(10, 10, 20, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .flag-row {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      padding: 10px 20px;
+      border-bottom: 1px solid rgba(30, 30, 46, 0.8);
+      align-items: center;
+    }
+
+    .flag-row:last-child {
+      border-bottom: none;
+    }
+
+    .flag-code {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .flag-desc {
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    @media (max-width: 768px) {
+      .flag-row {
+        grid-template-columns: 1fr;
+        gap: 2px;
+        padding: 10px 16px;
+      }
+    }
+
     /* ── FOOTER ── */
     footer {
       border-top: 1px solid var(--border);
@@ -785,7 +838,7 @@
       <h1 class="fade-up fade-up-delay-1">Give Claude Code full<br>knowledge of your project</h1>
 
       <p class="hero-subtitle fade-up fade-up-delay-2">
-        Cortex analyzes your git history, code structure, security and dependencies — giving Claude Code full project knowledge from day one.
+        Cortex analyzes your git history, code structure, security and dependencies — giving Claude Code full project knowledge. Parallel analysis, smart caching, MCP integration.
       </p>
 
       <div class="install-block fade-up fade-up-delay-3" id="install-block">
@@ -894,6 +947,16 @@
           <h3>MCP Server</h3>
           <p>Native Claude Code integration via Model Context Protocol. Context is injected automatically — no manual file reading.</p>
         </div>
+        <div class="feature-card fade-up fade-up-delay-3">
+          <span class="feature-icon">⚡</span>
+          <h3>Smart Caching</h3>
+          <p>Unchanged files are skipped on re-runs using MD5 file hashing. Only modified files are re-analyzed — repeat runs are near-instant.</p>
+        </div>
+        <div class="feature-card fade-up fade-up-delay-4">
+          <span class="feature-icon">🔄</span>
+          <h3>Parallel Analysis</h3>
+          <p>Analyzes up to 8 files simultaneously using thread pool execution. Large projects run 5-8x faster than sequential analysis.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -991,8 +1054,20 @@
           <div class="command-desc">only changed files</div>
         </div>
         <div class="command-row">
+          <div class="command-code">cortex analyze --no-llm</div>
+          <div class="command-desc">skip AI summaries (faster)</div>
+        </div>
+        <div class="command-row">
+          <div class="command-code">cortex analyze --max-files 100</div>
+          <div class="command-desc">limit files analyzed</div>
+        </div>
+        <div class="command-row">
+          <div class="command-code">cortex analyze --no-cache</div>
+          <div class="command-desc">force full re-analysis</div>
+        </div>
+        <div class="command-row">
           <div class="command-code">cortex init</div>
-          <div class="command-desc">generate CLAUDE.md</div>
+          <div class="command-desc">generate CLAUDE.md for your project</div>
         </div>
         <div class="command-row">
           <div class="command-code">cortex context &lt;file&gt;</div>
@@ -1008,7 +1083,15 @@
         </div>
         <div class="command-row">
           <div class="command-code">cortex diff &lt;branch&gt;</div>
-          <div class="command-desc">update context for changed files vs branch</div>
+          <div class="command-desc">update context for files changed vs branch</div>
+        </div>
+        <div class="command-row">
+          <div class="command-code">cortex status</div>
+          <div class="command-desc">show analysis status</div>
+        </div>
+        <div class="command-row">
+          <div class="command-code">cortex clean</div>
+          <div class="command-desc">remove all generated context files</div>
         </div>
         <div class="command-row">
           <div class="command-code">cortex install-hook</div>
@@ -1021,6 +1104,28 @@
         <div class="command-row">
           <div class="command-code">cortex mcp</div>
           <div class="command-desc">start MCP server for Claude Code</div>
+        </div>
+      </div>
+
+      <div class="flags-block fade-up fade-up-delay-2">
+        <p class="flags-label">Flags</p>
+        <div class="flags-table">
+          <div class="flag-row">
+            <div class="flag-code">--no-llm</div>
+            <div class="flag-desc">skip AI summaries (no API key needed)</div>
+          </div>
+          <div class="flag-row">
+            <div class="flag-code">--no-cache</div>
+            <div class="flag-desc">force full re-analysis</div>
+          </div>
+          <div class="flag-row">
+            <div class="flag-code">--max-files N</div>
+            <div class="flag-desc">limit files analyzed</div>
+          </div>
+          <div class="flag-row">
+            <div class="flag-code">--since REF</div>
+            <div class="flag-desc">only changed files since git ref</div>
+          </div>
         </div>
       </div>
     </div>

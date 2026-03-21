@@ -27,11 +27,16 @@ git commit -m "add cortex context"
 ```
 cortex analyze                 analyze full project
 cortex analyze --since HEAD~20 only changed files
+cortex analyze --no-llm        skip AI summaries (faster)
+cortex analyze --max-files 100 limit files analyzed
+cortex analyze --no-cache      force full re-analysis
 cortex init                    generate CLAUDE.md for your project
 cortex context src/auth.py     show context for one file
 cortex security                security audit only
 cortex deps                    scan dependencies for vulnerabilities
 cortex diff main               update context for files changed vs branch
+cortex status                  show analysis status
+cortex clean                   remove all generated context files
 cortex install-hook            auto-update on every commit
 cortex watch                   auto-update when commits arrive
 cortex mcp                     start MCP server for Claude Code
