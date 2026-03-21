@@ -1,0 +1,2 @@
+[console_scripts]
+codeprep = codeprep.cli:cli

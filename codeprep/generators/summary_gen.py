@@ -1,0 +1,47 @@
+"""Generate SUMMARY.md and SECURITY_REPORT.md."""
+from pathlib import Path
+
+
+def write_summary(repo_root: str, file_results: list[dict]) -> None:
+    lines = ["# Project Summary — CodePrep Analysis", ""]
+    lines.append(f"**Files analyzed:** {len(file_results)}")
+
+    by_lang: dict[str, int] = {}
+    total_constructs = 0
+    total_security = 0
+
+    for r in file_results:
+        lang = r.get('language', 'unknown')
+        by_lang[lang] = by_lang.get(lang, 0) + 1
+        total_constructs += r.get('constructs', 0)
+        total_security += r.get('security_count', 0)
+
+    lines.append(f"**Total constructs:** {total_constructs}")
+    lines.append(f"**Security issues:** {total_security}")
+    lines.append("")
+    lines.append("## Languages")
+    for lang, count in sorted(by_lang.items()):
+        lines.append(f"- {lang}: {count} files")
+    lines.append("")
+
+    out = Path(repo_root) / ".claude" / "docs" / "SUMMARY.md"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text("\n".join(lines), encoding='utf-8')
+
+
+def write_security_report(repo_root: str, security_items: list[dict]) -> None:
+    lines = ["# Security Report — CodePrep", ""]
+
+    if not security_items:
+        lines.append("✅ No security issues found.")
+    else:
+        lines.append(f"**Total issues:** {len(security_items)}")
+        lines.append("")
+        for item in security_items:
+            lines.append(f"### {item['file']}")
+            lines.append(f"- [{item['severity']}] Line {item.get('line', '?')}: {item['message']}")
+            lines.append("")
+
+    out = Path(repo_root) / ".claude" / "docs" / "SECURITY_REPORT.md"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text("\n".join(lines), encoding='utf-8')
