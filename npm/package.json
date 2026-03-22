@@ -1,13 +1,33 @@
 {
   "name": "@kovalenko-tech/cortex-ai",
   "version": "0.1.0",
-  "description": "Project knowledge base for Claude Code",
-  "bin": { "cortex": "./bin/cortex.js", "cortex-ai": "./bin/cortex.js" },
-  "scripts": { "postinstall": "node bin/install.js" },
-  "keywords": ["claude", "claude-code", "ai", "context", "codebase"],
+  "description": "Project knowledge base for Claude Code — extracts git history, risk scores, PR decisions and security into .claude/docs/ context files",
+  "bin": {
+    "cortex": "./bin/cortex.js",
+    "cortex-ai": "./bin/cortex.js"
+  },
+  "scripts": {
+    "postinstall": "node bin/install.js"
+  },
+  "keywords": [
+    "claude-code",
+    "ai",
+    "developer-tools",
+    "mcp",
+    "git",
+    "context",
+    "codebase",
+    "security",
+    "risk"
+  ],
   "author": "Kyrylo Kovalenko",
   "license": "MIT",
-  "repository": { "type": "git", "url": "https://github.com/kovalenko-tech/cortex" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kovalenko-tech/cortex.git"
+  },
   "homepage": "https://kovalenko-tech.github.io/cortex/",
-  "engines": { "node": ">=16" }
+  "engines": {
+    "node": ">=16"
+  }
 }
