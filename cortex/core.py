@@ -274,6 +274,21 @@ class Cortex:
             console.print("  [bold]Keep context fresh:[/]")
             console.print("  [cyan]cortex install-hook[/]  [dim]# auto-update on every commit[/]")
             console.print()
+
+            # Check for missing env vars and suggest setup
+            missing = []
+            if not os.environ.get('ANTHROPIC_API_KEY'):
+                missing.append('ANTHROPIC_API_KEY [dim](for AI summaries)[/]')
+            if not os.environ.get('GITHUB_TOKEN') and not os.environ.get('GH_TOKEN'):
+                missing.append('GITHUB_TOKEN [dim](for PR knowledge mining)[/]')
+
+            if missing:
+                console.print("  [bold]Optional: configure API keys[/]")
+                for m in missing:
+                    console.print(f"  [yellow]○[/]  {m}")
+                console.print()
+                console.print("  Run [cyan]cortex setup[/] to configure interactively")
+                console.print()
         else:
             console.print("  Run [cyan]cortex status[/] for details")
             console.print()

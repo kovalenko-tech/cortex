@@ -1,4 +1,5 @@
 """CLI entry point."""
+import os
 import click
 from pathlib import Path
 from rich.console import Console
@@ -289,17 +290,77 @@ def init(repo, force):
     console.print(f"[dim]Review and customize it, then commit to your repo.[/]")
 
 
+def _add_to_shell_rc(key: str, value: str, console) -> None:
+    """Add an export line to .zshrc or .bashrc."""
+    from pathlib import Path
+
+    # Detect shell config file
+    shell = os.environ.get('SHELL', '')
+    if 'zsh' in shell:
+        rc_file = Path.home() / '.zshrc'
+    else:
+        rc_file = Path.home() / '.bashrc'
+
+    export_line = f'\nexport {key}="{value}"\n'
+
+    # Check if already set
+    if rc_file.exists() and key in rc_file.read_text():
+        console.print(f"[yellow]⚠[/]  {key} already exists in {rc_file.name}, skipping")
+        return
+
+    with open(rc_file, 'a') as f:
+        f.write(export_line)
+
+    # Also set in current process
+    os.environ[key] = value
+
+    console.print(f"[green]✓[/] Added {key} to {rc_file}")
+    console.print(f"[dim]  Run: source ~/{rc_file.name} to activate in current shell[/]")
+
+
 @cli.command()
 @click.option("--repo", default=".", show_default=True)
 def setup(repo):
     """Interactive setup wizard — analyze project and configure Claude Code integration."""
-    import os
     from pathlib import Path
 
     repo_root = os.path.abspath(repo)
     console.print()
     console.print("[bold]Cortex Setup[/]")
     console.print("[dim]Let's set up Cortex for your project.[/]")
+    console.print()
+
+    # Step 0: Environment setup
+    console.print("[bold]Step 0:[/] Environment variables")
+    console.print()
+
+    anthropic_set = bool(os.environ.get('ANTHROPIC_API_KEY'))
+    github_set = bool(os.environ.get('GITHUB_TOKEN') or os.environ.get('GH_TOKEN'))
+
+    if anthropic_set and github_set:
+        console.print("[green]✓[/] ANTHROPIC_API_KEY is set")
+        console.print("[green]✓[/] GITHUB_TOKEN is set")
+    else:
+        if not anthropic_set:
+            console.print("[yellow]○[/]  ANTHROPIC_API_KEY not set")
+            console.print("  [dim]Used for AI-generated file summaries (optional)[/]")
+            console.print("  Get one at: [cyan]https://console.anthropic.com/[/]")
+            console.print()
+            key = click.prompt("  Enter API key (or press Enter to skip)", default="", show_default=False)
+            if key.strip():
+                _add_to_shell_rc('ANTHROPIC_API_KEY', key.strip(), console)
+            console.print()
+
+        if not github_set:
+            console.print("[yellow]○[/]  GITHUB_TOKEN not set")
+            console.print("  [dim]Used for mining PR decisions (optional)[/]")
+            console.print("  Get one at: [cyan]https://github.com/settings/tokens[/]")
+            console.print()
+            token = click.prompt("  Enter GitHub token (or press Enter to skip)", default="", show_default=False)
+            if token.strip():
+                _add_to_shell_rc('GITHUB_TOKEN', token.strip(), console)
+            console.print()
+
     console.print()
 
     # Step 1: Check if already analyzed
@@ -471,6 +532,14 @@ def status(repo):
     )
     if high_risk > 0:
         console.print(f"  High-risk files: [red]{high_risk}[/] — run [cyan]cortex risks[/]")
+
+    # Environment check
+    console.print()
+    console.print("  [bold dim]Environment:[/]")
+    anthropic = "✅ set" if os.environ.get('ANTHROPIC_API_KEY') else "[yellow]not set[/] (AI summaries disabled)"
+    github = "✅ set" if (os.environ.get('GITHUB_TOKEN') or os.environ.get('GH_TOKEN')) else "[yellow]not set[/] (PR mining disabled)"
+    console.print(f"  ANTHROPIC_API_KEY: {anthropic}")
+    console.print(f"  GITHUB_TOKEN:      {github}")
 
     console.print()
 
