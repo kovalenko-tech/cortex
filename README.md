@@ -10,7 +10,7 @@ curl -fsSL https://raw.githubusercontent.com/kovalenko-tech/cortex/main/install.
 
 Or with npx (requires Python 3.11+):
 ```bash
-npx cortex-ai analyze
+npx @kovalenko-tech/cortex-ai analyze
 ```
 
 ## Quick start

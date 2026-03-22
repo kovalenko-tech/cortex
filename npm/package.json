@@ -1,5 +1,5 @@
 {
-  "name": "cortex-ai",
+  "name": "@kovalenko-tech/cortex-ai",
   "version": "0.1.0",
   "description": "Project knowledge base for Claude Code",
   "bin": { "cortex": "./bin/cortex.js", "cortex-ai": "./bin/cortex.js" },
