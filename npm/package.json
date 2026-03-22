@@ -1,10 +1,10 @@
 {
   "name": "@kovalenko-tech/cortex-ai",
-  "version": "0.1.0",
-  "description": "Project knowledge base for Claude Code — extracts git history, risk scores, PR decisions and security into .claude/docs/ context files",
+  "version": "0.1.2",
+  "description": "Give Claude Code full knowledge of your codebase. Analyzes git history, risk scores, PR decisions and security — generates .claude/docs/ context files automatically.",
   "bin": {
-    "cortex": "./bin/cortex.js",
-    "cortex-ai": "./bin/cortex.js"
+    "cortex": "bin/cortex.js",
+    "cortex-ai": "bin/cortex.js"
   },
   "scripts": {
     "postinstall": "node bin/install.js"
@@ -18,7 +18,10 @@
     "context",
     "codebase",
     "security",
-    "risk"
+    "risk-scoring",
+    "code-analysis",
+    "claude",
+    "anthropic"
   ],
   "author": "Kyrylo Kovalenko",
   "license": "MIT",
